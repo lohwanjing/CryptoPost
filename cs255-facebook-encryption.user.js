@@ -1,7 +1,7 @@
 // ==UserScript==
-// @namespace      CS255-Lastname1-Lastname2
-// @name           CS255-Lastname1-Lastname2
-// @description    CS255-Lastname1-Lastname2 - CS255 Assignment 1
+// @namespace      CS255-Loh
+// @name           CS255-Loh
+// @description    CS255-Loh - CS255 Assignment 1
 // @version        1.5
 //
 // 
@@ -27,7 +27,8 @@
 
 var my_username; // user signed in as
 var keys = {}; // association map of keys: group -> key
-
+var keyGenCipher;
+var keyGenCounter;
 // Some initialization functions are called at the very end of this script.
 // You only have to edit the top portion.
 
@@ -46,6 +47,23 @@ function Encrypt(plainText, group) {
     // encrypt, add tag.
     return 'rot13:' + rot13(plainText);
   }
+
+}
+
+function aes256Encrypt(plainText, key){
+    var cipher = new sjcl.cipher.aes(key);
+	
+	//convert plaintext to bit array
+	var plainArray = sjcl.codec.utf8String.toBits(plainText);
+	
+	//find length of message
+	var textLength = sjc
+	
+    var dumbtext = new Array(4);
+    dumbtext[0] = 1; dumbtext[1] = 2; dumbtext[2] = 3; dumbtext[3] = 4;
+    var ctext = cipher.encrypt(dumbtext);
+    var outtext = cipher.decrypt(ctext);
+
 
 }
 
@@ -70,13 +88,43 @@ function Decrypt(cipherText, group) {
   }
 }
 
-// Generate a new key for the given group.
+
+
+
+// Generate a new key for the given group. Keys are in base64
 //
 // @param {String} group Group name.
 function GenerateKey(group) {
 
   // CS255-todo: Well this needs some work...
-  var key = 'CS255-todo';
+  if (keyGenCipher == null) {
+      var keyGenKey = GetRandomValues(8);
+	  keyGenCipher = new sjcl.cipher.aes(keyGenKey);
+	  keyGenCounter = GetRandomValues(4);
+  }
+  
+  
+   //first 128 bits
+  //increment counter by 1, TODO should check for carry to nest array, 
+  
+  keyGenCounter[3] = keyGenCounter[3] +1;
+  var keyArray1 =  keyGenCipher.encrypt(keyGenCounter);
+  
+   //2nd 128 bits
+  //increment counter by 1, TODO should check for carry to nest array, 
+  keyGenCounter[3] = keyGenCounter[3] +1;
+  var keyArray2 =  keyGenCipher.encrypt(keyGenCounter);
+  
+  //concat to 256 bits
+   var keyArray = sjcl.bitArray.concat(keyArray1, keyArray2);
+   
+   
+  //convert to base64 for easier reading and copying
+  var base64str = sjcl.codec.base64.fromBits(keyArray);
+  //var decodedStr = sjcl.codec.base64.toBits(base64str);
+  var key = base64str;
+  // var key = keyArray + "," + base64str + "," + decodedStr;
+  // var decrypt = keyGenCipher.decrypt(ctext);
 
   keys[group] = key;
   SaveKeys();
