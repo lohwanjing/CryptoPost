@@ -12,10 +12,11 @@
   "content_scripts": [ {
     "exclude_globs": [  ],
     "include_globs": [ "http://www.facebook.com/*", "https://www.facebook.com/*" ],
-    "js": [ "cs255-facebook-encryption.user.js" ],
+    "js": ["sjcl.js", "cs255-facebook-encryption.user.js" ],
     "matches": [ "http://*/*", "https://*/*" ],
     "run_at": "document_idle"
   } ],
+  "web_accessible_resources": ["sjcl.js"],
   "permissions": ["storage"],
   "converted_from_user_script": true,
   "description": "CS255-Loh - CS255 Assignment 1",

@@ -39,6 +39,36 @@ var keyGenCounter;
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
   // CS255-todo: encrypt the plainText, using key for the group.
+  
+   var key64 = keys[group];
+   
+   //alert(key64);
+   
+   var key = sjcl.codec.base64.toBits(key64);
+   
+   var iv = GetRandomValues(4);
+   var iv64 = sjcl.codec.base64.fromBits(iv);
+   //alert(iv64);
+   //var cipher = new sjcl.cipher.aes(key);
+   
+   //var plaintextBits =  sjcl.codec.utf8String.toBits(plaintext);
+   //var ciphertext = sjcl.mode.ccm.encrypt(cipher, plaintextBits, iv);
+   
+   //encode data
+   //var rp = {};
+   //var params = {iv:iv};
+   //alert(sjcl.json.encode(params));
+   var returnData = sjcl.json.encrypt(key, plainText);
+   //var returnData = sjcl.json.encode(rp);
+   //alert (returnData);
+   return returnData;
+   /*
+   var iv64 = sjcl.codec.base64.fromBits(iv);
+   var ciphertext64 = sjcl.codec.base64.fromBits(ciphertext);
+   
+   var data ={firstname:"John",lastname:"Doe",age:50,eyecolor:"blue"};
+  
+  
   if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
     // already done, or blank
     alert("Try entering a message (the button works only once)");
@@ -47,9 +77,9 @@ function Encrypt(plainText, group) {
     // encrypt, add tag.
     return 'rot13:' + rot13(plainText);
   }
-
+*/
 }
-
+/*
 function aes256Encrypt(plainText, key){
     var cipher = new sjcl.cipher.aes(key);
 	
@@ -66,7 +96,7 @@ function aes256Encrypt(plainText, key){
 
 
 }
-
+*/
 // Return the decryption of the message for the given group, in the form of a string.
 // Throws an error in case the string is not properly encrypted.
 //
@@ -76,7 +106,21 @@ function aes256Encrypt(plainText, key){
 function Decrypt(cipherText, group) {
 
   // CS255-todo: implement decryption on encrypted messages
-
+   try {
+   var key64 = keys[group];
+   
+   //alert(key64);
+   
+   var key = sjcl.codec.base64.toBits(key64);
+   
+   var data =  sjcl.json.decrypt(key, cipherText);
+   return data;
+   
+   }
+   catch(e) {
+     throw "not encrypted";
+  }
+  /*
   if (cipherText.indexOf('rot13:') == 0) {
 
     // decrypt, ignore the tag.
@@ -86,6 +130,7 @@ function Decrypt(cipherText, group) {
   } else {
     throw "not encrypted";
   }
+  */
 }
 
 
@@ -715,898 +760,60 @@ function DecryptMsg(msg) {
 }
 
 
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-//
-// Below here is from other libraries. Here be dragons.
-//
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
+var sjcl={cipher:{},hash:{},keyexchange:{},mode:{},misc:{},codec:{},exception:{corrupt:function(a){this.toString=function(){return"CORRUPT: "+this.message};this.message=a},invalid:function(a){this.toString=function(){return"INVALID: "+this.message};this.message=a},bug:function(a){this.toString=function(){return"BUG: "+this.message};this.message=a},notReady:function(a){this.toString=function(){return"NOT READY: "+this.message};this.message=a}}};
+if(typeof module!="undefined"&&module.exports)module.exports=sjcl;
+sjcl.cipher.aes=function(a){this.h[0][0][0]||this.z();var b,c,d,e,f=this.h[0][4],g=this.h[1];b=a.length;var h=1;if(b!==4&&b!==6&&b!==8)throw new sjcl.exception.invalid("invalid aes key size");this.a=[d=a.slice(0),e=[]];for(a=b;a<4*b+28;a++){c=d[a-1];if(a%b===0||b===8&&a%b===4){c=f[c>>>24]<<24^f[c>>16&255]<<16^f[c>>8&255]<<8^f[c&255];if(a%b===0){c=c<<8^c>>>24^h<<24;h=h<<1^(h>>7)*283}}d[a]=d[a-b]^c}for(b=0;a;b++,a--){c=d[b&3?a:a-4];e[b]=a<=4||b<4?c:g[0][f[c>>>24]]^g[1][f[c>>16&255]]^g[2][f[c>>8&255]]^
+g[3][f[c&255]]}};
+sjcl.cipher.aes.prototype={encrypt:function(a){return this.I(a,0)},decrypt:function(a){return this.I(a,1)},h:[[[],[],[],[],[]],[[],[],[],[],[]]],z:function(){var a=this.h[0],b=this.h[1],c=a[4],d=b[4],e,f,g,h=[],i=[],k,j,l,m;for(e=0;e<0x100;e++)i[(h[e]=e<<1^(e>>7)*283)^e]=e;for(f=g=0;!c[f];f^=k||1,g=i[g]||1){l=g^g<<1^g<<2^g<<3^g<<4;l=l>>8^l&255^99;c[f]=l;d[l]=f;j=h[e=h[k=h[f]]];m=j*0x1010101^e*0x10001^k*0x101^f*0x1010100;j=h[l]*0x101^l*0x1010100;for(e=0;e<4;e++){a[e][f]=j=j<<24^j>>>8;b[e][l]=m=m<<24^m>>>8}}for(e=
+0;e<5;e++){a[e]=a[e].slice(0);b[e]=b[e].slice(0)}},I:function(a,b){if(a.length!==4)throw new sjcl.exception.invalid("invalid aes block size");var c=this.a[b],d=a[0]^c[0],e=a[b?3:1]^c[1],f=a[2]^c[2];a=a[b?1:3]^c[3];var g,h,i,k=c.length/4-2,j,l=4,m=[0,0,0,0];g=this.h[b];var n=g[0],o=g[1],p=g[2],q=g[3],r=g[4];for(j=0;j<k;j++){g=n[d>>>24]^o[e>>16&255]^p[f>>8&255]^q[a&255]^c[l];h=n[e>>>24]^o[f>>16&255]^p[a>>8&255]^q[d&255]^c[l+1];i=n[f>>>24]^o[a>>16&255]^p[d>>8&255]^q[e&255]^c[l+2];a=n[a>>>24]^o[d>>16&
+255]^p[e>>8&255]^q[f&255]^c[l+3];l+=4;d=g;e=h;f=i}for(j=0;j<4;j++){m[b?3&-j:j]=r[d>>>24]<<24^r[e>>16&255]<<16^r[f>>8&255]<<8^r[a&255]^c[l++];g=d;d=e;e=f;f=a;a=g}return m}};
+sjcl.bitArray={bitSlice:function(a,b,c){a=sjcl.bitArray.P(a.slice(b/32),32-(b&31)).slice(1);return c===undefined?a:sjcl.bitArray.clamp(a,c-b)},extract:function(a,b,c){var d=Math.floor(-b-c&31);return((b+c-1^b)&-32?a[b/32|0]<<32-d^a[b/32+1|0]>>>d:a[b/32|0]>>>d)&(1<<c)-1},concat:function(a,b){if(a.length===0||b.length===0)return a.concat(b);var c=a[a.length-1],d=sjcl.bitArray.getPartial(c);return d===32?a.concat(b):sjcl.bitArray.P(b,d,c|0,a.slice(0,a.length-1))},bitLength:function(a){var b=a.length;
+if(b===0)return 0;return(b-1)*32+sjcl.bitArray.getPartial(a[b-1])},clamp:function(a,b){if(a.length*32<b)return a;a=a.slice(0,Math.ceil(b/32));var c=a.length;b&=31;if(c>0&&b)a[c-1]=sjcl.bitArray.partial(b,a[c-1]&2147483648>>b-1,1);return a},partial:function(a,b,c){if(a===32)return b;return(c?b|0:b<<32-a)+a*0x10000000000},getPartial:function(a){return Math.round(a/0x10000000000)||32},equal:function(a,b){if(sjcl.bitArray.bitLength(a)!==sjcl.bitArray.bitLength(b))return false;var c=0,d;for(d=0;d<a.length;d++)c|=
+a[d]^b[d];return c===0},P:function(a,b,c,d){var e;e=0;if(d===undefined)d=[];for(;b>=32;b-=32){d.push(c);c=0}if(b===0)return d.concat(a);for(e=0;e<a.length;e++){d.push(c|a[e]>>>b);c=a[e]<<32-b}e=a.length?a[a.length-1]:0;a=sjcl.bitArray.getPartial(e);d.push(sjcl.bitArray.partial(b+a&31,b+a>32?c:d.pop(),1));return d},k:function(a,b){return[a[0]^b[0],a[1]^b[1],a[2]^b[2],a[3]^b[3]]}};
+sjcl.codec.utf8String={fromBits:function(a){var b="",c=sjcl.bitArray.bitLength(a),d,e;for(d=0;d<c/8;d++){if((d&3)===0)e=a[d/4];b+=String.fromCharCode(e>>>24);e<<=8}return decodeURIComponent(escape(b))},toBits:function(a){a=unescape(encodeURIComponent(a));var b=[],c,d=0;for(c=0;c<a.length;c++){d=d<<8|a.charCodeAt(c);if((c&3)===3){b.push(d);d=0}}c&3&&b.push(sjcl.bitArray.partial(8*(c&3),d));return b}};
+sjcl.codec.hex={fromBits:function(a){var b="",c;for(c=0;c<a.length;c++)b+=((a[c]|0)+0xf00000000000).toString(16).substr(4);return b.substr(0,sjcl.bitArray.bitLength(a)/4)},toBits:function(a){var b,c=[],d;a=a.replace(/\s|0x/g,"");d=a.length;a+="00000000";for(b=0;b<a.length;b+=8)c.push(parseInt(a.substr(b,8),16)^0);return sjcl.bitArray.clamp(c,d*4)}};
+sjcl.codec.base64={F:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",fromBits:function(a,b,c){var d="",e=0,f=sjcl.codec.base64.F,g=0,h=sjcl.bitArray.bitLength(a);if(c)f=f.substr(0,62)+"-_";for(c=0;d.length*6<h;){d+=f.charAt((g^a[c]>>>e)>>>26);if(e<6){g=a[c]<<6-e;e+=26;c++}else{g<<=6;e-=6}}for(;d.length&3&&!b;)d+="=";return d},toBits:function(a,b){a=a.replace(/\s|=/g,"");var c=[],d=0,e=sjcl.codec.base64.F,f=0,g;if(b)e=e.substr(0,62)+"-_";for(b=0;b<a.length;b++){g=e.indexOf(a.charAt(b));
+if(g<0)throw new sjcl.exception.invalid("this isn't base64!");if(d>26){d-=26;c.push(f^g>>>d);f=g<<32-d}else{d+=6;f^=g<<32-d}}d&56&&c.push(sjcl.bitArray.partial(d&56,f,1));return c}};sjcl.codec.base64url={fromBits:function(a){return sjcl.codec.base64.fromBits(a,1,1)},toBits:function(a){return sjcl.codec.base64.toBits(a,1)}};sjcl.hash.sha256=function(a){this.a[0]||this.z();if(a){this.n=a.n.slice(0);this.i=a.i.slice(0);this.e=a.e}else this.reset()};sjcl.hash.sha256.hash=function(a){return(new sjcl.hash.sha256).update(a).finalize()};
+sjcl.hash.sha256.prototype={blockSize:512,reset:function(){this.n=this.N.slice(0);this.i=[];this.e=0;return this},update:function(a){if(typeof a==="string")a=sjcl.codec.utf8String.toBits(a);var b,c=this.i=sjcl.bitArray.concat(this.i,a);b=this.e;a=this.e=b+sjcl.bitArray.bitLength(a);for(b=512+b&-512;b<=a;b+=512)this.D(c.splice(0,16));return this},finalize:function(){var a,b=this.i,c=this.n;b=sjcl.bitArray.concat(b,[sjcl.bitArray.partial(1,1)]);for(a=b.length+2;a&15;a++)b.push(0);b.push(Math.floor(this.e/
+4294967296));for(b.push(this.e|0);b.length;)this.D(b.splice(0,16));this.reset();return c},N:[],a:[],z:function(){function a(e){return(e-Math.floor(e))*0x100000000|0}var b=0,c=2,d;a:for(;b<64;c++){for(d=2;d*d<=c;d++)if(c%d===0)continue a;if(b<8)this.N[b]=a(Math.pow(c,0.5));this.a[b]=a(Math.pow(c,1/3));b++}},D:function(a){var b,c,d=a.slice(0),e=this.n,f=this.a,g=e[0],h=e[1],i=e[2],k=e[3],j=e[4],l=e[5],m=e[6],n=e[7];for(a=0;a<64;a++){if(a<16)b=d[a];else{b=d[a+1&15];c=d[a+14&15];b=d[a&15]=(b>>>7^b>>>18^
+b>>>3^b<<25^b<<14)+(c>>>17^c>>>19^c>>>10^c<<15^c<<13)+d[a&15]+d[a+9&15]|0}b=b+n+(j>>>6^j>>>11^j>>>25^j<<26^j<<21^j<<7)+(m^j&(l^m))+f[a];n=m;m=l;l=j;j=k+b|0;k=i;i=h;h=g;g=b+(h&i^k&(h^i))+(h>>>2^h>>>13^h>>>22^h<<30^h<<19^h<<10)|0}e[0]=e[0]+g|0;e[1]=e[1]+h|0;e[2]=e[2]+i|0;e[3]=e[3]+k|0;e[4]=e[4]+j|0;e[5]=e[5]+l|0;e[6]=e[6]+m|0;e[7]=e[7]+n|0}};
+sjcl.mode.ccm={name:"ccm",encrypt:function(a,b,c,d,e){var f,g=b.slice(0),h=sjcl.bitArray,i=h.bitLength(c)/8,k=h.bitLength(g)/8;e=e||64;d=d||[];if(i<7)throw new sjcl.exception.invalid("ccm: iv must be at least 7 bytes");for(f=2;f<4&&k>>>8*f;f++);if(f<15-i)f=15-i;c=h.clamp(c,8*(15-f));b=sjcl.mode.ccm.H(a,b,c,d,e,f);g=sjcl.mode.ccm.J(a,g,c,b,e,f);return h.concat(g.data,g.tag)},decrypt:function(a,b,c,d,e){e=e||64;d=d||[];var f=sjcl.bitArray,g=f.bitLength(c)/8,h=f.bitLength(b),i=f.clamp(b,h-e),k=f.bitSlice(b,
+h-e);h=(h-e)/8;if(g<7)throw new sjcl.exception.invalid("ccm: iv must be at least 7 bytes");for(b=2;b<4&&h>>>8*b;b++);if(b<15-g)b=15-g;c=f.clamp(c,8*(15-b));i=sjcl.mode.ccm.J(a,i,c,k,e,b);a=sjcl.mode.ccm.H(a,i.data,c,d,e,b);if(!f.equal(i.tag,a))throw new sjcl.exception.corrupt("ccm: tag doesn't match");return i.data},H:function(a,b,c,d,e,f){var g=[],h=sjcl.bitArray,i=h.k;e/=8;if(e%2||e<4||e>16)throw new sjcl.exception.invalid("ccm: invalid tag length");if(d.length>0xffffffff||b.length>0xffffffff)throw new sjcl.exception.bug("ccm: can't deal with 4GiB or more data");
+f=[h.partial(8,(d.length?64:0)|e-2<<2|f-1)];f=h.concat(f,c);f[3]|=h.bitLength(b)/8;f=a.encrypt(f);if(d.length){c=h.bitLength(d)/8;if(c<=65279)g=[h.partial(16,c)];else if(c<=0xffffffff)g=h.concat([h.partial(16,65534)],[c]);g=h.concat(g,d);for(d=0;d<g.length;d+=4)f=a.encrypt(i(f,g.slice(d,d+4).concat([0,0,0])))}for(d=0;d<b.length;d+=4)f=a.encrypt(i(f,b.slice(d,d+4).concat([0,0,0])));return h.clamp(f,e*8)},J:function(a,b,c,d,e,f){var g,h=sjcl.bitArray;g=h.k;var i=b.length,k=h.bitLength(b);c=h.concat([h.partial(8,
+f-1)],c).concat([0,0,0]).slice(0,4);d=h.bitSlice(g(d,a.encrypt(c)),0,e);if(!i)return{tag:d,data:[]};for(g=0;g<i;g+=4){c[3]++;e=a.encrypt(c);b[g]^=e[0];b[g+1]^=e[1];b[g+2]^=e[2];b[g+3]^=e[3]}return{tag:d,data:h.clamp(b,k)}}};
+sjcl.mode.ocb2={name:"ocb2",encrypt:function(a,b,c,d,e,f){if(sjcl.bitArray.bitLength(c)!==128)throw new sjcl.exception.invalid("ocb iv must be 128 bits");var g,h=sjcl.mode.ocb2.B,i=sjcl.bitArray,k=i.k,j=[0,0,0,0];c=h(a.encrypt(c));var l,m=[];d=d||[];e=e||64;for(g=0;g+4<b.length;g+=4){l=b.slice(g,g+4);j=k(j,l);m=m.concat(k(c,a.encrypt(k(c,l))));c=h(c)}l=b.slice(g);b=i.bitLength(l);g=a.encrypt(k(c,[0,0,0,b]));l=i.clamp(k(l.concat([0,0,0]),g),b);j=k(j,k(l.concat([0,0,0]),g));j=a.encrypt(k(j,k(c,h(c))));
+if(d.length)j=k(j,f?d:sjcl.mode.ocb2.pmac(a,d));return m.concat(i.concat(l,i.clamp(j,e)))},decrypt:function(a,b,c,d,e,f){if(sjcl.bitArray.bitLength(c)!==128)throw new sjcl.exception.invalid("ocb iv must be 128 bits");e=e||64;var g=sjcl.mode.ocb2.B,h=sjcl.bitArray,i=h.k,k=[0,0,0,0],j=g(a.encrypt(c)),l,m,n=sjcl.bitArray.bitLength(b)-e,o=[];d=d||[];for(c=0;c+4<n/32;c+=4){l=i(j,a.decrypt(i(j,b.slice(c,c+4))));k=i(k,l);o=o.concat(l);j=g(j)}m=n-c*32;l=a.encrypt(i(j,[0,0,0,m]));l=i(l,h.clamp(b.slice(c),
+m).concat([0,0,0]));k=i(k,l);k=a.encrypt(i(k,i(j,g(j))));if(d.length)k=i(k,f?d:sjcl.mode.ocb2.pmac(a,d));if(!h.equal(h.clamp(k,e),h.bitSlice(b,n)))throw new sjcl.exception.corrupt("ocb: tag doesn't match");return o.concat(h.clamp(l,m))},pmac:function(a,b){var c,d=sjcl.mode.ocb2.B,e=sjcl.bitArray,f=e.k,g=[0,0,0,0],h=a.encrypt([0,0,0,0]);h=f(h,d(d(h)));for(c=0;c+4<b.length;c+=4){h=d(h);g=f(g,a.encrypt(f(h,b.slice(c,c+4))))}b=b.slice(c);if(e.bitLength(b)<128){h=f(h,d(h));b=e.concat(b,[2147483648|0,0,
+0,0])}g=f(g,b);return a.encrypt(f(d(f(h,d(h))),g))},B:function(a){return[a[0]<<1^a[1]>>>31,a[1]<<1^a[2]>>>31,a[2]<<1^a[3]>>>31,a[3]<<1^(a[0]>>>31)*135]}};sjcl.misc.hmac=function(a,b){this.M=b=b||sjcl.hash.sha256;var c=[[],[]],d=b.prototype.blockSize/32;this.l=[new b,new b];if(a.length>d)a=b.hash(a);for(b=0;b<d;b++){c[0][b]=a[b]^909522486;c[1][b]=a[b]^1549556828}this.l[0].update(c[0]);this.l[1].update(c[1])};
+sjcl.misc.hmac.prototype.encrypt=sjcl.misc.hmac.prototype.mac=function(a,b){a=(new this.M(this.l[0])).update(a,b).finalize();return(new this.M(this.l[1])).update(a).finalize()};
+sjcl.misc.pbkdf2=function(a,b,c,d,e){c=c||1E3;if(d<0||c<0)throw sjcl.exception.invalid("invalid params to pbkdf2");if(typeof a==="string")a=sjcl.codec.utf8String.toBits(a);e=e||sjcl.misc.hmac;a=new e(a);var f,g,h,i,k=[],j=sjcl.bitArray;for(i=1;32*k.length<(d||1);i++){e=f=a.encrypt(j.concat(b,[i]));for(g=1;g<c;g++){f=a.encrypt(f);for(h=0;h<f.length;h++)e[h]^=f[h]}k=k.concat(e)}if(d)k=j.clamp(k,d);return k};
+sjcl.random={randomWords:function(a,b){var c=[];b=this.isReady(b);var d;if(b===0)throw new sjcl.exception.notReady("generator isn't seeded");else b&2&&this.U(!(b&1));for(b=0;b<a;b+=4){(b+1)%0x10000===0&&this.L();d=this.w();c.push(d[0],d[1],d[2],d[3])}this.L();return c.slice(0,a)},setDefaultParanoia:function(a){this.t=a},addEntropy:function(a,b,c){c=c||"user";var d,e,f=(new Date).valueOf(),g=this.q[c],h=this.isReady(),i=0;d=this.G[c];if(d===undefined)d=this.G[c]=this.R++;if(g===undefined)g=this.q[c]=
+0;this.q[c]=(this.q[c]+1)%this.b.length;switch(typeof a){case "number":if(b===undefined)b=1;this.b[g].update([d,this.u++,1,b,f,1,a|0]);break;case "object":c=Object.prototype.toString.call(a);if(c==="[object Uint32Array]"){e=[];for(c=0;c<a.length;c++)e.push(a[c]);a=e}else{if(c!=="[object Array]")i=1;for(c=0;c<a.length&&!i;c++)if(typeof a[c]!="number")i=1}if(!i){if(b===undefined)for(c=b=0;c<a.length;c++)for(e=a[c];e>0;){b++;e>>>=1}this.b[g].update([d,this.u++,2,b,f,a.length].concat(a))}break;case "string":if(b===
+undefined)b=a.length;this.b[g].update([d,this.u++,3,b,f,a.length]);this.b[g].update(a);break;default:i=1}if(i)throw new sjcl.exception.bug("random: addEntropy only supports number, array of numbers or string");this.j[g]+=b;this.f+=b;if(h===0){this.isReady()!==0&&this.K("seeded",Math.max(this.g,this.f));this.K("progress",this.getProgress())}},isReady:function(a){a=this.C[a!==undefined?a:this.t];return this.g&&this.g>=a?this.j[0]>80&&(new Date).valueOf()>this.O?3:1:this.f>=a?2:0},getProgress:function(a){a=
+this.C[a?a:this.t];return this.g>=a?1:this.f>a?1:this.f/a},startCollectors:function(){if(!this.m){if(window.addEventListener){window.addEventListener("load",this.o,false);window.addEventListener("mousemove",this.p,false)}else if(document.attachEvent){document.attachEvent("onload",this.o);document.attachEvent("onmousemove",this.p)}else throw new sjcl.exception.bug("can't attach event");this.m=true}},stopCollectors:function(){if(this.m){if(window.removeEventListener){window.removeEventListener("load",
+this.o,false);window.removeEventListener("mousemove",this.p,false)}else if(window.detachEvent){window.detachEvent("onload",this.o);window.detachEvent("onmousemove",this.p)}this.m=false}},addEventListener:function(a,b){this.r[a][this.Q++]=b},removeEventListener:function(a,b){var c;a=this.r[a];var d=[];for(c in a)a.hasOwnProperty(c)&&a[c]===b&&d.push(c);for(b=0;b<d.length;b++){c=d[b];delete a[c]}},b:[new sjcl.hash.sha256],j:[0],A:0,q:{},u:0,G:{},R:0,g:0,f:0,O:0,a:[0,0,0,0,0,0,0,0],d:[0,0,0,0],s:undefined,
+t:6,m:false,r:{progress:{},seeded:{}},Q:0,C:[0,48,64,96,128,192,0x100,384,512,768,1024],w:function(){for(var a=0;a<4;a++){this.d[a]=this.d[a]+1|0;if(this.d[a])break}return this.s.encrypt(this.d)},L:function(){this.a=this.w().concat(this.w());this.s=new sjcl.cipher.aes(this.a)},T:function(a){this.a=sjcl.hash.sha256.hash(this.a.concat(a));this.s=new sjcl.cipher.aes(this.a);for(a=0;a<4;a++){this.d[a]=this.d[a]+1|0;if(this.d[a])break}},U:function(a){var b=[],c=0,d;this.O=b[0]=(new Date).valueOf()+3E4;for(d=
+0;d<16;d++)b.push(Math.random()*0x100000000|0);for(d=0;d<this.b.length;d++){b=b.concat(this.b[d].finalize());c+=this.j[d];this.j[d]=0;if(!a&&this.A&1<<d)break}if(this.A>=1<<this.b.length){this.b.push(new sjcl.hash.sha256);this.j.push(0)}this.f-=c;if(c>this.g)this.g=c;this.A++;this.T(b)},p:function(a){sjcl.random.addEntropy([a.x||a.clientX||a.offsetX,a.y||a.clientY||a.offsetY],2,"mouse")},o:function(){sjcl.random.addEntropy((new Date).valueOf(),2,"loadtime")},K:function(a,b){var c;a=sjcl.random.r[a];
+var d=[];for(c in a)a.hasOwnProperty(c)&&d.push(a[c]);for(c=0;c<d.length;c++)d[c](b)}};try{var s=new Uint32Array(32);crypto.getRandomValues(s);sjcl.random.addEntropy(s,1024,"crypto['getRandomValues']")}catch(t){}
+sjcl.json={defaults:{v:1,iter:1E3,ks:128,ts:64,mode:"ccm",adata:"",cipher:"aes"},encrypt:function(a,b,c,d){c=c||{};d=d||{};var e=sjcl.json,f=e.c({iv:sjcl.random.randomWords(4,0)},e.defaults),g;e.c(f,c);c=f.adata;if(typeof f.salt==="string")f.salt=sjcl.codec.base64.toBits(f.salt);if(typeof f.iv==="string")f.iv=sjcl.codec.base64.toBits(f.iv);if(!sjcl.mode[f.mode]||!sjcl.cipher[f.cipher]||typeof a==="string"&&f.iter<=100||f.ts!==64&&f.ts!==96&&f.ts!==128||f.ks!==128&&f.ks!==192&&f.ks!==0x100||f.iv.length<
+2||f.iv.length>4)throw new sjcl.exception.invalid("json encrypt: invalid parameters");if(typeof a==="string"){g=sjcl.misc.cachedPbkdf2(a,f);a=g.key.slice(0,f.ks/32);f.salt=g.salt}if(typeof b==="string")b=sjcl.codec.utf8String.toBits(b);if(typeof c==="string")c=sjcl.codec.utf8String.toBits(c);g=new sjcl.cipher[f.cipher](a);e.c(d,f);d.key=a;f.ct=sjcl.mode[f.mode].encrypt(g,b,f.iv,c,f.ts);return e.encode(f)},decrypt:function(a,b,c,d){c=c||{};d=d||{};var e=sjcl.json;b=e.c(e.c(e.c({},e.defaults),e.decode(b)),
+c,true);var f;c=b.adata;if(typeof b.salt==="string")b.salt=sjcl.codec.base64.toBits(b.salt);if(typeof b.iv==="string")b.iv=sjcl.codec.base64.toBits(b.iv);if(!sjcl.mode[b.mode]||!sjcl.cipher[b.cipher]||typeof a==="string"&&b.iter<=100||b.ts!==64&&b.ts!==96&&b.ts!==128||b.ks!==128&&b.ks!==192&&b.ks!==0x100||!b.iv||b.iv.length<2||b.iv.length>4)throw new sjcl.exception.invalid("json decrypt: invalid parameters");if(typeof a==="string"){f=sjcl.misc.cachedPbkdf2(a,b);a=f.key.slice(0,b.ks/32);b.salt=f.salt}if(typeof c===
+"string")c=sjcl.codec.utf8String.toBits(c);f=new sjcl.cipher[b.cipher](a);c=sjcl.mode[b.mode].decrypt(f,b.ct,b.iv,c,b.ts);e.c(d,b);d.key=a;return sjcl.codec.utf8String.fromBits(c)},encode:function(a){var b,c="{",d="";for(b in a)if(a.hasOwnProperty(b)){if(!b.match(/^[a-z0-9]+$/i))throw new sjcl.exception.invalid("json encode: invalid property name");c+=d+'"'+b+'":';d=",";switch(typeof a[b]){case "number":case "boolean":c+=a[b];break;case "string":c+='"'+escape(a[b])+'"';break;case "object":c+='"'+
+sjcl.codec.base64.fromBits(a[b],1)+'"';break;default:throw new sjcl.exception.bug("json encode: unsupported type");}}return c+"}"},decode:function(a){a=a.replace(/\s/g,"");if(!a.match(/^\{.*\}$/))throw new sjcl.exception.invalid("json decode: this isn't json!");a=a.replace(/^\{|\}$/g,"").split(/,/);var b={},c,d;for(c=0;c<a.length;c++){if(!(d=a[c].match(/^(?:(["']?)([a-z][a-z0-9]*)\1):(?:(\d+)|"([a-z0-9+\/%*_.@=\-]*)")$/i)))throw new sjcl.exception.invalid("json decode: this isn't json!");b[d[2]]=
+d[3]?parseInt(d[3],10):d[2].match(/^(ct|salt|iv)$/)?sjcl.codec.base64.toBits(d[4]):unescape(d[4])}return b},c:function(a,b,c){if(a===undefined)a={};if(b===undefined)return a;var d;for(d in b)if(b.hasOwnProperty(d)){if(c&&a[d]!==undefined&&a[d]!==b[d])throw new sjcl.exception.invalid("required parameter overridden");a[d]=b[d]}return a},W:function(a,b){var c={},d;for(d in a)if(a.hasOwnProperty(d)&&a[d]!==b[d])c[d]=a[d];return c},V:function(a,b){var c={},d;for(d=0;d<b.length;d++)if(a[b[d]]!==undefined)c[b[d]]=
+a[b[d]];return c}};sjcl.encrypt=sjcl.json.encrypt;sjcl.decrypt=sjcl.json.decrypt;sjcl.misc.S={};sjcl.misc.cachedPbkdf2=function(a,b){var c=sjcl.misc.S,d;b=b||{};d=b.iter||1E3;c=c[a]=c[a]||{};d=c[d]=c[d]||{firstSalt:b.salt&&b.salt.length?b.salt.slice(0):sjcl.random.randomWords(2,0)};c=b.salt===undefined?d.firstSalt:b.salt;d[c]=d[c]||sjcl.misc.pbkdf2(a,c,b.iter);return{key:d[c].slice(0),salt:c.slice(0)}};
 
-
-/** @fileOverview Javascript cryptography implementation.
- *
- * Crush to remove comments, shorten variable names and
- * generally reduce transmission size.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-"use strict"; /*jslint indent: 2, bitwise: false, nomen: false, plusplus: false, white: false, regexp: false */
-/*global document, window, escape, unescape */
-
-/** @namespace The Stanford Javascript Crypto Library, top-level namespace. */
-var sjcl = { /** @namespace Symmetric ciphers. */
-  cipher: {},
-
-  /** @namespace Hash functions.  Right now only SHA256 is implemented. */
-  hash: {},
-
-  /** @namespace Block cipher modes of operation. */
-  mode: {},
-
-  /** @namespace Miscellaneous.  HMAC and PBKDF2. */
-  misc: {},
-
-  /**
-   * @namespace Bit array encoders and decoders.
-   *
-   * @description
-   * The members of this namespace are functions which translate between
-   * SJCL's bitArrays and other objects (usually strings).  Because it
-   * isn't always clear which direction is encoding and which is decoding,
-   * the method names are "fromBits" and "toBits".
-   */
-  codec: {},
-
-  /** @namespace Exceptions. */
-  exception: { /** @class Ciphertext is corrupt. */
-    corrupt: function(message) {
-      this.toString = function() {
-        return "CORRUPT: " + this.message;
-      };
-      this.message = message;
-    },
-
-    /** @class Invalid parameter. */
-    invalid: function(message) {
-      this.toString = function() {
-        return "INVALID: " + this.message;
-      };
-      this.message = message;
-    },
-
-    /** @class Bug or missing feature in SJCL. */
-    bug: function(message) {
-      this.toString = function() {
-        return "BUG: " + this.message;
-      };
-      this.message = message;
-    },
-
-    // Added by mbarrien to fix an SJCL bug.
-    /** @class Not ready to encrypt. */
-    notready: function(message) {
-      this.toString = function() {
-        return "NOTREADY: " + this.message;
-      };
-      this.message = message;
-    }
-  }
-};
-
-/** @fileOverview Low-level AES implementation.
- *
- * This file contains a low-level implementation of AES, optimized for
- * size and for efficiency on several browsers.  It is based on
- * OpenSSL's aes_core.c, a public-domain implementation by Vincent
- * Rijmen, Antoon Bosselaers and Paulo Barreto.
- *
- * An older version of this implementation is available in the public
- * domain, but this one is (c) Emily Stark, Mike Hamburg, Dan Boneh,
- * Stanford University 2008-2010 and BSD-licensed for liability
- * reasons.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/**
- * Schedule out an AES key for both encryption and decryption.  This
- * is a low-level class.  Use a cipher mode to do bulk encryption.
- *
- * @constructor
- * @param {Array} key The key as an array of 4, 6 or 8 words.
- *
- * @class Advanced Encryption Standard (low-level interface)
- */
-sjcl.cipher.aes = function(key) {
-  if (!this._tables[0][0][0]) {
-    this._precompute();
-  }
-
-  var i, j, tmp, encKey, decKey, sbox = this._tables[0][4],
-    decTable = this._tables[1],
-    keyLen = key.length,
-    rcon = 1;
-
-  if (keyLen !== 4 && keyLen !== 6 && keyLen !== 8) {
-    throw new sjcl.exception.invalid("invalid aes key size");
-  }
-
-  this._key = [encKey = key.slice(0), decKey = []];
-
-  // schedule encryption keys
-  for (i = keyLen; i < 4 * keyLen + 28; i++) {
-    tmp = encKey[i - 1];
-
-    // apply sbox
-    if (i % keyLen === 0 || (keyLen === 8 && i % keyLen === 4)) {
-      tmp = sbox[tmp >>> 24] << 24 ^ sbox[tmp >> 16 & 255] << 16 ^ sbox[tmp >> 8 & 255] << 8 ^ sbox[tmp & 255];
-
-      // shift rows and add rcon
-      if (i % keyLen === 0) {
-        tmp = tmp << 8 ^ tmp >>> 24 ^ rcon << 24;
-        rcon = rcon << 1 ^ (rcon >> 7) * 283;
-      }
-    }
-
-    encKey[i] = encKey[i - keyLen] ^ tmp;
-  }
-
-  // schedule decryption keys
-  for (j = 0; i; j++, i--) {
-    tmp = encKey[j & 3 ? i : i - 4];
-    if (i <= 4 || j < 4) {
-      decKey[j] = tmp;
-    } else {
-      decKey[j] = decTable[0][sbox[tmp >>> 24]] ^ decTable[1][sbox[tmp >> 16 & 255]] ^ decTable[2][sbox[tmp >> 8 & 255]] ^ decTable[3][sbox[tmp & 255]];
-    }
-  }
-};
-
-sjcl.cipher.aes.prototype = {
-  // public
-  /* Something like this might appear here eventually
-  name: "AES",
-  blockSize: 4,
-  keySizes: [4,6,8],
-  */
-
-  /**
-   * Encrypt an array of 4 big-endian words.
-   * @param {Array} data The plaintext.
-   * @return {Array} The ciphertext.
-   */
-  encrypt: function(data) {
-    return this._crypt(data, 0);
-  },
-
-  /**
-   * Decrypt an array of 4 big-endian words.
-   * @param {Array} data The ciphertext.
-   * @return {Array} The plaintext.
-   */
-  decrypt: function(data) {
-    return this._crypt(data, 1);
-  },
-
-  /**
-   * The expanded S-box and inverse S-box tables.  These will be computed
-   * on the client so that we don't have to send them down the wire.
-   *
-   * There are two tables, _tables[0] is for encryption and
-   * _tables[1] is for decryption.
-   *
-   * The first 4 sub-tables are the expanded S-box with MixColumns.  The
-   * last (_tables[01][4]) is the S-box itself.
-   *
-   * @private
-   */
-  _tables: [
-    [
-      [],
-      [],
-      [],
-      [],
-      []
-    ],
-    [
-      [],
-      [],
-      [],
-      [],
-      []
-    ]
-  ],
-
-  /**
-   * Expand the S-box tables.
-   *
-   * @private
-   */
-  _precompute: function() {
-    var encTable = this._tables[0],
-      decTable = this._tables[1],
-      sbox = encTable[4],
-      sboxInv = decTable[4],
-      i, x, xInv, d = [],
-      th = [],
-      x2, x4, x8, s, tEnc, tDec;
-
-    // Compute double and third tables
-    for (i = 0; i < 256; i++) {
-      th[(d[i] = i << 1 ^ (i >> 7) * 283) ^ i] = i;
-    }
-
-    for (x = xInv = 0; !sbox[x]; x ^= x2 || 1, xInv = th[xInv] || 1) {
-      // Compute sbox
-      s = xInv ^ xInv << 1 ^ xInv << 2 ^ xInv << 3 ^ xInv << 4;
-      s = s >> 8 ^ s & 255 ^ 99;
-      sbox[x] = s;
-      sboxInv[s] = x;
-
-      // Compute MixColumns
-      x8 = d[x4 = d[x2 = d[x]]];
-      tDec = x8 * 0x1010101 ^ x4 * 0x10001 ^ x2 * 0x101 ^ x * 0x1010100;
-      tEnc = d[s] * 0x101 ^ s * 0x1010100;
-
-      for (i = 0; i < 4; i++) {
-        encTable[i][x] = tEnc = tEnc << 24 ^ tEnc >>> 8;
-        decTable[i][s] = tDec = tDec << 24 ^ tDec >>> 8;
-      }
-    }
-
-    // Compactify.  Considerable speedup on Firefox.
-    for (i = 0; i < 5; i++) {
-      encTable[i] = encTable[i].slice(0);
-      decTable[i] = decTable[i].slice(0);
-    }
-  },
-
-  /**
-   * Encryption and decryption core.
-   * @param {Array} input Four words to be encrypted or decrypted.
-   * @param dir The direction, 0 for encrypt and 1 for decrypt.
-   * @return {Array} The four encrypted or decrypted words.
-   * @private
-   */
-  _crypt: function(input, dir) {
-    if (input.length !== 4) {
-      throw new sjcl.exception.invalid("invalid aes block size");
-    }
-
-    var key = this._key[dir],
-      // state variables a,b,c,d are loaded with pre-whitened data
-      a = input[0] ^ key[0],
-      b = input[dir ? 3 : 1] ^ key[1],
-      c = input[2] ^ key[2],
-      d = input[dir ? 1 : 3] ^ key[3],
-      a2, b2, c2,
-
-      nInnerRounds = key.length / 4 - 2,
-      i, kIndex = 4,
-      out = [0, 0, 0, 0],
-      table = this._tables[dir],
-
-      // load up the tables
-      t0 = table[0],
-      t1 = table[1],
-      t2 = table[2],
-      t3 = table[3],
-      sbox = table[4];
-
-    // Inner rounds.  Cribbed from OpenSSL.
-    for (i = 0; i < nInnerRounds; i++) {
-      a2 = t0[a >>> 24] ^ t1[b >> 16 & 255] ^ t2[c >> 8 & 255] ^ t3[d & 255] ^ key[kIndex];
-      b2 = t0[b >>> 24] ^ t1[c >> 16 & 255] ^ t2[d >> 8 & 255] ^ t3[a & 255] ^ key[kIndex + 1];
-      c2 = t0[c >>> 24] ^ t1[d >> 16 & 255] ^ t2[a >> 8 & 255] ^ t3[b & 255] ^ key[kIndex + 2];
-      d = t0[d >>> 24] ^ t1[a >> 16 & 255] ^ t2[b >> 8 & 255] ^ t3[c & 255] ^ key[kIndex + 3];
-      kIndex += 4;
-      a = a2;
-      b = b2;
-      c = c2;
-    }
-
-    // Last round.
-    for (i = 0; i < 4; i++) {
-      out[dir ? 3 & -i : i] = sbox[a >>> 24] << 24 ^ sbox[b >> 16 & 255] << 16 ^ sbox[c >> 8 & 255] << 8 ^ sbox[d & 255] ^ key[kIndex++];
-      a2 = a;
-      a = b;
-      b = c;
-      c = d;
-      d = a2;
-    }
-    return out;
-  }
-};
-
-/** @fileOverview Arrays of bits, encoded as arrays of Numbers.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/** @namespace Arrays of bits, encoded as arrays of Numbers.
- *
- * @description
- * <p>
- * These objects are the currency accepted by SJCL's crypto functions.
- * </p>
- *
- * <p>
- * Most of our crypto primitives operate on arrays of 4-byte words internally,
- * but many of them can take arguments that are not a multiple of 4 bytes.
- * This library encodes arrays of bits (whose size need not be a multiple of 8
- * bits) as arrays of 32-bit words.  The bits are packed, big-endian, into an
- * array of words, 32 bits at a time.  Since the words are double-precision
- * floating point numbers, they fit some extra data.  We use this (in a private,
- * possibly-changing manner) to encode the number of bits actually  present
- * in the last word of the array.
- * </p>
- *
- * <p>
- * Because bitwise ops clear this out-of-band data, these arrays can be passed
- * to ciphers like AES which want arrays of words.
- * </p>
- */
-sjcl.bitArray = {
-  /**
-   * Array slices in units of bits.
-   * @param {bitArray a} The array to slice.
-   * @param {Number} bstart The offset to the start of the slice, in bits.
-   * @param {Number} bend The offset to the end of the slice, in bits.  If this is undefined,
-   * slice until the end of the array.
-   * @return {bitArray} The requested slice.
-   */
-  bitSlice: function(a, bstart, bend) {
-    a = sjcl.bitArray._shiftRight(a.slice(bstart / 32), 32 - (bstart & 31)).slice(1);
-    return(bend === undefined) ? a : sjcl.bitArray.clamp(a, bend - bstart);
-  },
-
-  /**
-   * Concatenate two bit arrays.
-   * @param {bitArray} a1 The first array.
-   * @param {bitArray} a2 The second array.
-   * @return {bitArray} The concatenation of a1 and a2.
-   */
-  concat: function(a1, a2) {
-    if (a1.length === 0 || a2.length === 0) {
-      return a1.concat(a2);
-    }
-
-    var out, i, last = a1[a1.length - 1],
-      shift = sjcl.bitArray.getPartial(last);
-    if (shift === 32) {
-      return a1.concat(a2);
-    } else {
-      return sjcl.bitArray._shiftRight(a2, shift, last | 0, a1.slice(0, a1.length - 1));
-    }
-  },
-
-  /**
-   * Find the length of an array of bits.
-   * @param {bitArray} a The array.
-   * @return {Number} The length of a, in bits.
-   */
-  bitLength: function(a) {
-    var l = a.length,
-      x;
-    if (l === 0) {
-      return 0;
-    }
-    x = a[l - 1];
-    return(l - 1) * 32 + sjcl.bitArray.getPartial(x);
-  },
-
-  /**
-   * Truncate an array.
-   * @param {bitArray} a The array.
-   * @param {Number} len The length to truncate to, in bits.
-   * @return {bitArray} A new array, truncated to len bits.
-   */
-  clamp: function(a, len) {
-    if (a.length * 32 < len) {
-      return a;
-    }
-    a = a.slice(0, Math.ceil(len / 32));
-    var l = a.length;
-    len = len & 31;
-    if (l > 0 && len) {
-      a[l - 1] = sjcl.bitArray.partial(len, a[l - 1] & 0x80000000 >> (len - 1), 1);
-    }
-    return a;
-  },
-
-  /**
-   * Make a partial word for a bit array.
-   * @param {Number} len The number of bits in the word.
-   * @param {Number} x The bits.
-   * @param {Number} [0] _end Pass 1 if x has already been shifted to the high side.
-   * @return {Number} The partial word.
-   */
-  partial: function(len, x, _end) {
-    if (len === 32) {
-      return x;
-    }
-    return(_end ? x | 0 : x << (32 - len)) + len * 0x10000000000;
-  },
-
-  /**
-   * Get the number of bits used by a partial word.
-   * @param {Number} x The partial word.
-   * @return {Number} The number of bits used by the partial word.
-   */
-  getPartial: function(x) {
-    return Math.round(x / 0x10000000000) || 32;
-  },
-
-  /**
-   * Compare two arrays for equality in a predictable amount of time.
-   * @param {bitArray} a The first array.
-   * @param {bitArray} b The second array.
-   * @return {boolean} true if a == b; false otherwise.
-   */
-  equal: function(a, b) {
-    if (sjcl.bitArray.bitLength(a) !== sjcl.bitArray.bitLength(b)) {
-      return false;
-    }
-    var x = 0,
-      i;
-    for (i = 0; i < a.length; i++) {
-      x |= a[i] ^ b[i];
-    }
-    return(x === 0);
-  },
-
-  /** Shift an array right.
-   * @param {bitArray} a The array to shift.
-   * @param {Number} shift The number of bits to shift.
-   * @param {Number} [carry=0] A byte to carry in
-   * @param {bitArray} [out=[]] An array to prepend to the output.
-   * @private
-   */
-  _shiftRight: function(a, shift, carry, out) {
-    var i, last2 = 0,
-      shift2;
-    if (out === undefined) {
-      out = [];
-    }
-
-    for (; shift >= 32; shift -= 32) {
-      out.push(carry);
-      carry = 0;
-    }
-    if (shift === 0) {
-      return out.concat(a);
-    }
-
-    for (i = 0; i < a.length; i++) {
-      out.push(carry | a[i] >>> shift);
-      carry = a[i] << (32 - shift);
-    }
-    last2 = a.length ? a[a.length - 1] : 0;
-    shift2 = sjcl.bitArray.getPartial(last2);
-    out.push(sjcl.bitArray.partial(shift + shift2 & 31, (shift + shift2 > 32) ? carry : out.pop(), 1));
-    return out;
-  },
-
-  /** xor a block of 4 words together.
-   * @private
-   */
-  _xor4: function(x, y) {
-    return [x[0] ^ y[0], x[1] ^ y[1], x[2] ^ y[2], x[3] ^ y[3]];
-  }
-};
-
-/** @fileOverview Bit array codec implementations.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/** @namespace Base64 encoding/decoding */
-sjcl.codec.base64 = {
-  /** The base64 alphabet.
-   * @private
-   */
-  _chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-  
-  /** Convert from a bitArray to a base64 string. */
-  fromBits: function (arr, _noEquals, _url) {
-    var out = "", i, bits=0, c = sjcl.codec.base64._chars, ta=0, bl = sjcl.bitArray.bitLength(arr);
-    if (_url) c = c.substr(0,62) + '-_';
-    for (i=0; out.length * 6 < bl; ) {
-      out += c.charAt((ta ^ arr[i]>>>bits) >>> 26);
-      if (bits < 6) {
-        ta = arr[i] << (6-bits);
-        bits += 26;
-        i++;
-      } else {
-        ta <<= 6;
-        bits -= 6;
-      }
-    }
-    while ((out.length & 3) && !_noEquals) { out += "="; }
-    return out;
-  },
-  
-  /** Convert from a base64 string to a bitArray */
-  toBits: function(str, _url) {
-    str = str.replace(/\s|=/g,'');
-    var out = [], i, bits=0, c = sjcl.codec.base64._chars, ta=0, x;
-    if (_url) c = c.substr(0,62) + '-_';
-    for (i=0; i<str.length; i++) {
-      x = c.indexOf(str.charAt(i));
-      if (x < 0) {
-        throw new sjcl.exception.invalid("this isn't base64!");
-      }
-      if (bits > 26) {
-        bits -= 26;
-        out.push(ta ^ x>>>bits);
-        ta  = x << (32-bits);
-      } else {
-        bits += 6;
-        ta ^= x << (32-bits);
-      }
-    }
-    if (bits&56) {
-      out.push(sjcl.bitArray.partial(bits&56, ta, 1));
-    }
-    return out;
-  }
-};
-
-sjcl.codec.base64url = {
-  fromBits: function (arr) { return sjcl.codec.base64.fromBits(arr,1,1); },
-  toBits: function (str) { return sjcl.codec.base64.toBits(str,1); }
-};
-
-
-/** @fileOverview Bit array codec implementations.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/** @namespace UTF-8 strings */
-sjcl.codec.utf8String = { /** Convert from a bitArray to a UTF-8 string. */
-  fromBits: function(arr) {
-    var out = "",
-      bl = sjcl.bitArray.bitLength(arr),
-      i, tmp;
-    for (i = 0; i < bl / 8; i++) {
-      if ((i & 3) === 0) {
-        tmp = arr[i / 4];
-      }
-      out += String.fromCharCode(tmp >>> 24);
-      tmp <<= 8;
-    }
-    return decodeURIComponent(escape(out));
-  },
-
-  /** Convert from a UTF-8 string to a bitArray. */
-  toBits: function(str) {
-    str = unescape(encodeURIComponent(str));
-    var out = [],
-      i, tmp = 0;
-    for (i = 0; i < str.length; i++) {
-      tmp = tmp << 8 | str.charCodeAt(i);
-      if ((i & 3) === 3) {
-        out.push(tmp);
-        tmp = 0;
-      }
-    }
-    if (i & 3) {
-      out.push(sjcl.bitArray.partial(8 * (i & 3), tmp));
-    }
-    return out;
-  }
-};
-
-/** @fileOverview Password-based key-derivation function, version 2.0.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/** Password-Based Key-Derivation Function, version 2.0.
- *
- * Generate keys from passwords using PBKDF2-HMAC-SHA256.
- *
- * This is the method specified by RSA's PKCS #5 standard.
- *
- * @param {bitArray|String} password  The password.
- * @param {bitArray} salt The salt.  Should have lots of entropy.
- * @param {Number} [count=1000] The number of iterations.  Higher numbers make the function slower but more secure.
- * @param {Number} [length] The length of the derived key.  Defaults to the
-                            output size of the hash function.
- * @param {Object} [Prff=sjcl.misc.hmac] The pseudorandom function family.
- * @return {bitArray} the derived key.
- */
-sjcl.misc.pbkdf2 = function (password, salt, count, length, Prff) {
-  count = count || 1000;
-  
-  if (length < 0 || count < 0) {
-    throw sjcl.exception.invalid("invalid params to pbkdf2");
-  }
-  
-  if (typeof password === "string") {
-    password = sjcl.codec.utf8String.toBits(password);
-  }
-  
-  Prff = Prff || sjcl.misc.hmac;
-  
-  var prf = new Prff(password),
-      u, ui, i, j, k, out = [], b = sjcl.bitArray;
-
-  for (k = 1; 32 * out.length < (length || 1); k++) {
-    u = ui = prf.encrypt(b.concat(salt,[k]));
-    
-    for (i=1; i<count; i++) {
-      ui = prf.encrypt(ui);
-      for (j=0; j<ui.length; j++) {
-        u[j] ^= ui[j];
-      }
-    }
-    
-    out = out.concat(u);
-  }
-
-  if (length) { out = b.clamp(out, length); }
-
-  return out;
-};
-
-/** @fileOverview HMAC implementation.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/** HMAC with the specified hash function.
- * @constructor
- * @param {bitArray} key the key for HMAC.
- * @param {Object} [hash=sjcl.hash.sha256] The hash function to use.
- */
-
-// These functions are obfuscated for CS255, since you will be implementing HMAC yourself.
-sjcl.misc.hmac=function(a,b){
-  this.M=b=b||sjcl.hash.sha256;var c=[[],[]],d=b.prototype.blockSize/32;
-  this.l=[new b,new b];if(a.length>d)a=b.hash(a);
-  for(b=0;b<d;b++){c[0][b]=a[b]^0x36363636;c[1][b]=a[b]^0x5C5C5C5C}
-  this.l[0].update(c[0]);this.l[1].update(c[1]);
-};
-sjcl.misc.hmac.prototype.encrypt=sjcl.misc.hmac.prototype.mac=function(a,b){
-  a=(new this.M(this.l[0])).update(a,b).finalize();
-  return(new this.M(this.l[1])).update(a).finalize()
-};
-
-/** @fileOverview Javascript SHA-256 implementation.
- *
- * An older version of this implementation is available in the public
- * domain, but this one is (c) Emily Stark, Mike Hamburg, Dan Boneh,
- * Stanford University 2008-2010 and BSD-licensed for liability
- * reasons.
- *
- * Special thanks to Aldo Cortesi for pointing out several bugs in
- * this code.
- *
- * @author Emily Stark
- * @author Mike Hamburg
- * @author Dan Boneh
- */
-
-/**
- * Context for a SHA-256 operation in progress.
- * @constructor
- * @class Secure Hash Algorithm, 256 bits.
- */
-sjcl.hash.sha256 = function (hash) {
-  if (!this._key[0]) { this._precompute(); }
-  if (hash) {
-    this._h = hash._h.slice(0);
-    this._buffer = hash._buffer.slice(0);
-    this._length = hash._length;
-  } else {
-    this.reset();
-  }
-};
-
-/**
- * Hash a string or an array of words.
- * @static
- * @param {bitArray|String} data the data to hash.
- * @return {bitArray} The hash value, an array of 16 big-endian words.
- */
-sjcl.hash.sha256.hash = function (data) {
-  return (new sjcl.hash.sha256()).update(data).finalize();
-};
-
-sjcl.hash.sha256.prototype = {
-  /**
-   * The hash's block size, in bits.
-   * @constant
-   */
-  blockSize: 512,
-   
-  /**
-   * Reset the hash state.
-   * @return this
-   */
-  reset:function () {
-    this._h = this._init.slice(0);
-    this._buffer = [];
-    this._length = 0;
-    return this;
-  },
-  
-  /**
-   * Input several words to the hash.
-   * @param {bitArray|String} data the data to hash.
-   * @return this
-   */
-  update: function (data) {
-    if (typeof data === "string") {
-      data = sjcl.codec.utf8String.toBits(data);
-    }
-    var i, b = this._buffer = sjcl.bitArray.concat(this._buffer, data),
-        ol = this._length,
-        nl = this._length = ol + sjcl.bitArray.bitLength(data);
-    for (i = 512+ol & -512; i <= nl; i+= 512) {
-      this._block(b.splice(0,16));
-    }
-    return this;
-  },
-  
-  /**
-   * Complete hashing and output the hash value.
-   * @return {bitArray} The hash value, an array of 8 big-endian words.
-   */
-  finalize:function () {
-    var i, b = this._buffer, h = this._h;
-
-    // Round out and push the buffer
-    b = sjcl.bitArray.concat(b, [sjcl.bitArray.partial(1,1)]);
-    
-    // Round out the buffer to a multiple of 16 words, less the 2 length words.
-    for (i = b.length + 2; i & 15; i++) {
-      b.push(0);
-    }
-    
-    // append the length
-    b.push(Math.floor(this._length / 0x100000000));
-    b.push(this._length | 0);
-
-    while (b.length) {
-      this._block(b.splice(0,16));
-    }
-
-    this.reset();
-    return h;
-  },
-
-  /**
-   * The SHA-256 initialization vector, to be precomputed.
-   * @private
-   */
-  _init:[],
-  /*
-  _init:[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],
-  */
-  
-  /**
-   * The SHA-256 hash key, to be precomputed.
-   * @private
-   */
-  _key:[],
-  /*
-  _key:
-    [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-     0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-     0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-     0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2],
-  */
-
-
-  /**
-   * Function to precompute _init and _key.
-   * @private
-   */
-  _precompute: function () {
-    var i = 0, prime = 2, factor;
-
-    function frac(x) { return (x-Math.floor(x)) * 0x100000000 | 0; }
-
-    outer: for (; i<64; prime++) {
-      for (factor=2; factor*factor <= prime; factor++) {
-        if (prime % factor === 0) {
-          // not a prime
-          continue outer;
-        }
-      }
-      
-      if (i<8) {
-        this._init[i] = frac(Math.pow(prime, 1/2));
-      }
-      this._key[i] = frac(Math.pow(prime, 1/3));
-      i++;
-    }
-  },
-  
-  /**
-   * Perform one cycle of SHA-256.
-   * @param {bitArray} words one block of words.
-   * @private
-   */
-  _block:function (words) {  
-    var i, tmp, a, b,
-      w = words.slice(0),
-      h = this._h,
-      k = this._key,
-      h0 = h[0], h1 = h[1], h2 = h[2], h3 = h[3],
-      h4 = h[4], h5 = h[5], h6 = h[6], h7 = h[7];
-
-    /* Rationale for placement of |0 :
-     * If a value can overflow is original 32 bits by a factor of more than a few
-     * million (2^23 ish), there is a possibility that it might overflow the
-     * 53-bit mantissa and lose precision.
-     *
-     * To avoid this, we clamp back to 32 bits by |'ing with 0 on any value that
-     * propagates around the loop, and on the hash state h[].  I don't believe
-     * that the clamps on h4 and on h0 are strictly necessary, but it's close
-     * (for h4 anyway), and better safe than sorry.
-     *
-     * The clamps on h[] are necessary for the output to be correct even in the
-     * common case and for short inputs.
-     */
-    for (i=0; i<64; i++) {
-      // load up the input word for this round
-      if (i<16) {
-        tmp = w[i];
-      } else {
-        a   = w[(i+1 ) & 15];
-        b   = w[(i+14) & 15];
-        tmp = w[i&15] = ((a>>>7  ^ a>>>18 ^ a>>>3  ^ a<<25 ^ a<<14) + 
-                         (b>>>17 ^ b>>>19 ^ b>>>10 ^ b<<15 ^ b<<13) +
-                         w[i&15] + w[(i+9) & 15]) | 0;
-      }
-      
-      tmp = (tmp + h7 + (h4>>>6 ^ h4>>>11 ^ h4>>>25 ^ h4<<26 ^ h4<<21 ^ h4<<7) +  (h6 ^ h4&(h5^h6)) + k[i]); // | 0;
-      
-      // shift register
-      h7 = h6; h6 = h5; h5 = h4;
-      h4 = h3 + tmp | 0;
-      h3 = h2; h2 = h1; h1 = h0;
-
-      h0 = (tmp +  ((h1&h2) ^ (h3&(h1^h2))) + (h1>>>2 ^ h1>>>13 ^ h1>>>22 ^ h1<<30 ^ h1<<19 ^ h1<<10)) | 0;
-    }
-
-    h[0] = h[0]+h0 | 0;
-    h[1] = h[1]+h1 | 0;
-    h[2] = h[2]+h2 | 0;
-    h[3] = h[3]+h3 | 0;
-    h[4] = h[4]+h4 | 0;
-    h[5] = h[5]+h5 | 0;
-    h[6] = h[6]+h6 | 0;
-    h[7] = h[7]+h7 | 0;
-  }
-};
 
 
 // This is the initialization
+/*
+var s = document.createElement('script');
+s.src = chrome.extension.getURL('sjcl.js');
+(document.head||document.documentElement).appendChild(s);
+s.onload = function() {
+    s.parentNode.removeChild(s);
+};
+*/
 SetupUsernames();
 LoadKeys();
 AddElements();
