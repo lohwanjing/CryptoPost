@@ -29,6 +29,13 @@ var my_username; // user signed in as
 var keys = {}; // association map of keys: group -> key
 var keyGenCipher;
 var keyGenCounter;
+
+var chromePassword = "Password";
+var chromeSalt;
+
+var active = true;
+
+
 // Some initialization functions are called at the very end of this script.
 // You only have to edit the top portion.
 
@@ -38,65 +45,23 @@ var keyGenCounter;
 // @param {String} group Group name.
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
-  // CS255-todo: encrypt the plainText, using key for the group.
+  // CS255-DONE: encrypt the plainText, using key for the group.
   
    var key64 = keys[group];
    
-   //alert(key64);
    
    var key = sjcl.codec.base64.toBits(key64);
    
    var iv = GetRandomValues(4);
    var iv64 = sjcl.codec.base64.fromBits(iv);
-   //alert(iv64);
-   //var cipher = new sjcl.cipher.aes(key);
-   
-   //var plaintextBits =  sjcl.codec.utf8String.toBits(plaintext);
-   //var ciphertext = sjcl.mode.ccm.encrypt(cipher, plaintextBits, iv);
-   
-   //encode data
-   //var rp = {};
-   //var params = {iv:iv};
-   //alert(sjcl.json.encode(params));
+ 
    var returnData = sjcl.json.encrypt(key, plainText);
-   //var returnData = sjcl.json.encode(rp);
-   //alert (returnData);
+
    return returnData;
-   /*
-   var iv64 = sjcl.codec.base64.fromBits(iv);
-   var ciphertext64 = sjcl.codec.base64.fromBits(ciphertext);
-   
-   var data ={firstname:"John",lastname:"Doe",age:50,eyecolor:"blue"};
-  
-  
-  if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
-    // already done, or blank
-    alert("Try entering a message (the button works only once)");
-    return plainText;
-  } else {
-    // encrypt, add tag.
-    return 'rot13:' + rot13(plainText);
-  }
-*/
-}
-/*
-function aes256Encrypt(plainText, key){
-    var cipher = new sjcl.cipher.aes(key);
-	
-	//convert plaintext to bit array
-	var plainArray = sjcl.codec.utf8String.toBits(plainText);
-	
-	//find length of message
-	var textLength = sjc
-	
-    var dumbtext = new Array(4);
-    dumbtext[0] = 1; dumbtext[1] = 2; dumbtext[2] = 3; dumbtext[3] = 4;
-    var ctext = cipher.encrypt(dumbtext);
-    var outtext = cipher.decrypt(ctext);
-
 
 }
-*/
+
+
 // Return the decryption of the message for the given group, in the form of a string.
 // Throws an error in case the string is not properly encrypted.
 //
@@ -105,7 +70,7 @@ function aes256Encrypt(plainText, key){
 // @return {String} Decryption of the ciphertext.
 function Decrypt(cipherText, group) {
 
-  // CS255-todo: implement decryption on encrypted messages
+  // CS255-DONE: implement decryption on encrypted messages
    try {
    var key64 = keys[group];
    
@@ -150,13 +115,13 @@ function GenerateKey(group) {
   
   
    //first 128 bits
-  //increment counter by 1, TODO should check for carry to nest array, 
+  //increment counter by 1, TODO should check for carry to next array, 
   
   keyGenCounter[3] = keyGenCounter[3] +1;
   var keyArray1 =  keyGenCipher.encrypt(keyGenCounter);
   
    //2nd 128 bits
-  //increment counter by 1, TODO should check for carry to nest array, 
+  //increment counter by 1, TODO should check for carry to next array, 
   keyGenCounter[3] = keyGenCounter[3] +1;
   var keyArray2 =  keyGenCipher.encrypt(keyGenCounter);
   
@@ -179,9 +144,52 @@ function GenerateKey(group) {
 function SaveKeys() {
   
   // CS255-todo: plaintext keys going to disk?
+  
+  //sjcl.misc.cachedPbkdf2(chromePassword)
+  
   var key_str = JSON.stringify(keys);
+  //var en_keyStr = 
+  var en_keyStr = sjcl.json.encrypt(getPasswordKey(), key_str)
+  cs255.localStorage.setItem('facebook-keys-' + my_username, en_keyStr);
+}
 
-  cs255.localStorage.setItem('facebook-keys-' + my_username, key_str);
+function getPasswordKey(){
+   var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
+   var diskKey;
+   if (diskKey_str){
+      // key already present
+	  //alert("Disk Key Generated: " + diskKey);
+	  diskKey = sjcl.codec.base64.toBits(diskKey_str);
+   }
+   else {
+		//prompt for password
+		var password = prompt("Please enter your encryption password. This does nothing ","CHROME");
+		var defaultP = "CHROME";
+		var params ={};
+		params.salt = getPasswordSalt();
+		//params.salt = getPasswordSalt();
+		var diskKeyData = sjcl.misc.cachedPbkdf2(defaultP, params);
+		diskKey = diskKeyData.key;
+		//alert("Disk Key Generated: " + diskKey);
+		diskKey_str = sjcl.codec.base64.fromBits(diskKey);
+		//alert("Disk Key Generated: " + diskKey);
+		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
+   }
+   return diskKey;
+}
+
+function getPasswordSalt(){
+   var saltStr =  cs255.localStorage.getItem('facebook-dbSalt-' + my_username);
+   var salt;
+   if (saltStr){
+		salt = sjcl.codec.base64.toBits(saltStr);
+   }
+   else {
+		salt = keyGenCounter = GetRandomValues(2);
+		saltStr = salt = sjcl.codec.base64.fromBits(salt);
+		cs255.localStorage.setItem('facebook-dbSalt-' + my_username, saltStr);
+   }
+   return salt;
 }
 
 // Load the group keys from disk.
@@ -189,10 +197,18 @@ function LoadKeys() {
   keys = {}; // Reset the keys.
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
   if (saved) {
-    // CS255-todo: plaintext keys were on disk?
-    keys = JSON.parse(saved);
+    try {
+		var de_saved =  sjcl.json.decrypt(getPasswordKey(), saved);
+		keys = JSON.parse(de_saved);
+	}
+	catch (e) {
+		alert("Cannot Decrypt Keys");
+		keys = JSON.parse(saved);
+	}
   }
 }
+
+
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -261,6 +277,22 @@ var cs255 = {
       chrome.storage.local.clear();
     }
   }
+  /*
+  sessionStorage: {
+    setItem: function(key, value) {
+      sessionStorage.setItem(key, value);
+      var newEntries = {};
+      newEntries[key] = value;
+      chrome.storage.session.set(newEntries);
+    },
+    getItem: function(key) {
+      return sessionStorage.getItem(key);
+    },
+    clear: function() {
+      chrome.storage.session.clear();
+    }
+  }
+  */
 }
 
 if (typeof chrome.storage === "undefined") {
@@ -330,6 +362,8 @@ function SetupUsernames() {
   usernameMatched = usernameMatched.replace(/\?/, '');
   usernameMatched = usernameMatched.replace(/profile\.phpid=/, '');
   my_username = usernameMatched; // Update global.
+  //alert(usernameMatched);
+  //alert(my_username);
 }
 
 function getClassName(obj) {
@@ -426,6 +460,7 @@ function AddEncryptionTab() {
       table.setAttribute('border', 1);
       table.setAttribute('width', "80%");
       div.appendChild(table);
+	  
     }
   }
 }
