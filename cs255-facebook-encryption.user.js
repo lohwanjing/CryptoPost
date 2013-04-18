@@ -384,7 +384,7 @@ function Initialise() {
   if (!initState && !promptState) {
     // user has never used facebook extension before
 	
-	alert("Thank you for installing FacebookCrypto. Please proceed to your facebook settings page to set it up");
+	alert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up");
 	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 	cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
@@ -415,7 +415,7 @@ function getPassword(){
 		//alert("check active equality " + (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'));
          while (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
 		//prompt for password
-		var password = prompt("Please enter your encryption password. Press cancel to deactivate FacebookCrypto", null);
+		var password = prompt("Please enter your encryption password.\nPress cancel to deactivate FacebookCrypto", null);
 		if (password){
 		   //regenerate derived key
 			var params ={};
@@ -429,7 +429,7 @@ function getPassword(){
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
 			
 				if (de_correctStr == "Correctness Check") {
-					alert("Correct Password Entered, FacebookCrypto is now activated"); 
+					alert("FacebookCrypto is now activated"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
 					return;
@@ -620,9 +620,9 @@ function UpdatePasswordTable() {
 	row = document.createElement('tr');
 
 	var td = document.createElement('td');
-    td.innerHTML = 'Facebook Crypto works by encrypting your Facebook Groups messages.'
-	+ 'To start using it, please add in the Group name and click on "Generate Key" to generate a shared cryptographic key for use in the group. '
-	+ 'If you have obtained a key from a friend, fill in the details and use "Add Key" to update the database' ;
+    td.innerHTML = 'Facebook Crypto works by encrypting your Facebook Groups messages.\n'
+	+ 'To start using it, please add in the Group name and click on "Generate Key" to generate a shared cryptographic key for use in the group.\n'
+	+ 'If you have obtained a key from a friend, fill in the details and use "Add Key" to update the database.' ;
     row.appendChild(td);
     td = document.createElement('td');
     row.appendChild(td);
@@ -640,7 +640,7 @@ function UpdatePasswordTable() {
 	button = document.createElement('input');
 	button.type = 'button';
 	
-	button.value = 'Reset';
+	button.value = 'Reset Account Data';
 	
 	button.addEventListener("click", ClearUserData, false);
 	td.appendChild(button);
@@ -650,6 +650,9 @@ function UpdatePasswordTable() {
   }
   else {
   th.innerHTML = "Enter your Facebook Crypto Password";
+  row.appendChild(th);
+  th = document.createElement('th');
+  th.innerHTML = "&nbsp;";
   row.appendChild(th);
   th = document.createElement('th');
   th.innerHTML = "&nbsp;";
@@ -668,7 +671,7 @@ function UpdatePasswordTable() {
 	var button = document.createElement('input');
 	button.type = 'button';
 	if (cs255.localStorage.getItem('facebook-initState-' + my_username) == null || cs255.localStorage.getItem('facebook-initState-' + my_username) == 'false' ){
-		button.value = 'Set up Main password';
+		button.value = 'Set Up Main Password';
 	}
 	else {
 		button.value = 'Activate';
@@ -682,7 +685,7 @@ function UpdatePasswordTable() {
 	button = document.createElement('input');
 	button.type = 'button';
 	
-	button.value = 'Reset';
+	button.value = 'Reset Account Data';
 	
 	button.addEventListener("click", ClearUserData, false);
 	td.appendChild(button);
@@ -693,7 +696,7 @@ function UpdatePasswordTable() {
 }
 
 function ClearUserData(){
-	var r=confirm("This will delete all stored data for this user. Are you sure?");
+	var r=confirm("This will delete all stored data for this user.\nDo you wish to proceed?");
 		if (r==true) {
 		    cs255.localStorage.setItem('facebook-initState-' + my_username, false);
 		    cs255.localStorage.setItem('facebook-active-' + my_username, false);
@@ -760,7 +763,7 @@ function AddDBKey() {
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
 			
 				if (de_correctStr == "Correctness Check") {
-					alert("Password is correct. Facebook Crypto Activated"); 
+					//alert("Facebook Crypto Activated"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
 					cs255.localStorage.setItem('facebook-active-' + my_username, true);
@@ -1166,15 +1169,8 @@ a[b[d]];return c}};sjcl.encrypt=sjcl.json.encrypt;sjcl.decrypt=sjcl.json.decrypt
 
 
 
-// This is the initialization
-/*
-var s = document.createElement('script');
-s.src = chrome.extension.getURL('sjcl.js');
-(document.head||document.documentElement).appendChild(s);
-s.onload = function() {
-    s.parentNode.removeChild(s);
-};
-*/
+// This is the initialization of the content script
+
 SetupUsernames();
 Initialise();
 LoadKeys();
