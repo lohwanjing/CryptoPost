@@ -143,7 +143,7 @@ function GenerateKey(group) {
 // Take the current group keys, and save them to disk.
 function SaveKeys() {
   
-  if (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
+  if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
   
 	var key_str = JSON.stringify(keys);
 	var en_keyStr = sjcl.json.encrypt(getPasswordKey(), key_str)
@@ -193,7 +193,7 @@ function getPasswordSalt(){
 // Load the group keys from disk.
 function LoadKeys() {
   keys = {}; // Reset the keys.
-  if (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
+  if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
 	if (saved) {
 		try {
@@ -368,12 +368,12 @@ function SetupUsernames() {
 
 function Initialise() {
   // initialise session variable if not present
-  alert("Init User name " + my_username);
-  if (!sessionStorage.getItem('facebook-active-' + my_username)){
-	sessionStorage.setItem('facebook-active-' + my_username, true);
+  //alert("Init User name " + my_username);
+  if (!cs255.localStorage.getItem('facebook-active-' + my_username)){
+	cs255.localStorage.setItem('facebook-active-' + my_username, true);
   }
   //alert("Init Started");
-  //sessionStorage.setItem('facebook-active-' + my_username, true);
+  //cs255.localStorage.setItem('facebook-active-' + my_username, true);
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
   //alert("Init " + initState);
   var promptState = cs255.localStorage.getItem('facebook-promptState-' + my_username);
@@ -382,7 +382,7 @@ function Initialise() {
     // user has never used facebook extension before
 	
 	alert("Thank you for installing FacebookCrypto. Please proceed to your facebook settings page to set it up");
-	sessionStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 	cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
   else if (!initState) {
@@ -400,9 +400,9 @@ function Initialise() {
 	  //do nothing
    }
    else {
-        //alert("check active " + sessionStorage.getItem('facebook-active-' + my_username));
-		//alert("check active equality " + (sessionStorage.getItem('facebook-active-' + my_username) == 'true'));
-         while (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
+        //alert("check active " + cs255.localStorage.getItem('facebook-active-' + my_username));
+		//alert("check active equality " + (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'));
+         while (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
 		//prompt for password
 		var password = prompt("Please enter your encryption password. Press cancel to deactivate FacebookCrypto", null);
 		if (password){
@@ -418,7 +418,7 @@ function Initialise() {
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
 			
 				if (de_correctStr == "Correctness Check") {
-					alert("password is correct"); 
+					alert("Correct Password Entered, FacebookCrypto is now activated"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
 					return;
@@ -428,25 +428,25 @@ function Initialise() {
 				else {
 					// shouldn't get here, mac correct but plaintext wrong
 					alert("BUG! MAC Correct but test encryption wrong"); 
-					//sessionStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+					//cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 				}
 			}
 			catch (e){
 				// password is wrong
-				alert("password is wrong"); 
+				alert("Wrong Password Entered"); 
 			}
 		
 		}
 		else {
 		   //deactivate extension
-		   sessionStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+		   cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 		}
 		}
 		
 		
    }
   }
-   alert("End Init User name " + my_username);
+  // alert("End Init User name " + my_username);
 }
 
 function getPasswordKey(){
@@ -486,7 +486,7 @@ function hasClass(element, cls) {
 }
 
 function DocChanged(e) {
-  if (document.URL.match(/groups/) && sessionStorage.getItem('facebook-active-' + my_username) == 'true') {
+  if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     //Check for adding encrypt button for comments
     if (e.target.nodeType != 3) {
       decryptTextOfChildNodes(e.target);
@@ -505,6 +505,7 @@ function DocChanged(e) {
     if (!document.getElementById('cs255-keys-table') && !hasClass(e.target, "crypto")) {
       AddEncryptionTab();
       UpdateKeysTable();
+	  UpdatePasswordTable();
     }
   }
 }
@@ -556,14 +557,29 @@ function AddEncryptionTab() {
     var div = document.getElementById('contentArea');
     if (div) {
 	
-	  
-	  
-      var h2 = document.createElement('h2');
+	  var h2 = document.createElement('h2');
       h2.setAttribute("class", "crypto");
-      h2.innerHTML = "CS255 Keys";
+      h2.innerHTML = "Password Management";
       div.appendChild(h2);
 
       var table = document.createElement('table');
+      table.id = 'cs255-Password-table';
+      table.style.borderCollapse = "collapse";
+      table.setAttribute("class", "crypto");
+      table.setAttribute('cellpadding', 3);
+      table.setAttribute('cellspacing', 1);
+      table.setAttribute('border', 1);
+      table.setAttribute('width', "80%");
+      div.appendChild(table);
+	    
+	  
+	  
+		//h2 = document.createElement('h2');
+      //h2.setAttribute("class", "crypto");
+      //h2.innerHTML = "Group Keys";
+      //div.appendChild(h2);
+
+      table = document.createElement('table');
       table.id = 'cs255-keys-table';
       table.style.borderCollapse = "collapse";
       table.setAttribute("class", "crypto");
@@ -573,24 +589,57 @@ function AddEncryptionTab() {
       table.setAttribute('width', "80%");
       div.appendChild(table);
 	  
-	  h2 = document.createElement('h2');
-      h2.setAttribute("class", "crypto");
-      h2.innerHTML = "Password generation";
-      div.appendChild(h2);
+	}
+	
+  }
+}
 
-      table = document.createElement('table');
-      table.id = 'cs255-Password-table';
-      table.style.borderCollapse = "collapse";
-      table.setAttribute("class", "crypto");
-      table.setAttribute('cellpadding', 3);
-      table.setAttribute('cellspacing', 1);
-      table.setAttribute('border', 1);
-      table.setAttribute('width', "80%");
-      div.appendChild(table);
-	  
-	  
-	  // add generation line
-	  var row = document.createElement('tr');
+function UpdatePasswordTable() {
+  var table = document.getElementById('cs255-Password-table');
+  if (!table) return;
+  table.innerHTML = '';
+
+  // ugly due to events + GreaseMonkey.
+  // header
+  var row = document.createElement('tr');
+  var th = document.createElement('th');
+  if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
+	th.innerHTML = "Facebook Crypto is activated";
+	row.appendChild(th);
+	th = document.createElement('th');
+	th.innerHTML = "&nbsp;";
+	row.appendChild(th);
+	table.appendChild(row);
+	// add generation line
+	row = document.createElement('tr');
+
+	var td = document.createElement('td');
+    td.innerHTML = 'Facebook Crypto works by encrypting your Facebook Groups messages.'
+	+ 'To start using it, please add in the Group name and click on "Generate Key" to generate a shared cryptographic key for use in the group. '
+	+ 'If you have obtained a key from a friend, fill in the details and use "Add Key" to update the database' ;
+    row.appendChild(td);
+    td = document.createElement('td');
+    row.appendChild(td);
+	var button = document.createElement('input');
+	button.type = 'button';
+	
+	button.value = 'Deactivate';
+	
+	button.addEventListener("click", Deactivate, false);
+	td.appendChild(button);
+	row.appendChild(td);
+
+	table.appendChild(row);
+  }
+  else {
+  th.innerHTML = "Enter your Facebook Crypto Password";
+  row.appendChild(th);
+  th = document.createElement('th');
+  th.innerHTML = "&nbsp;";
+  row.appendChild(th);
+  table.appendChild(row);
+  // add generation line
+  row = document.createElement('tr');
 
 	  var td = document.createElement('td');
 	  td.innerHTML = '<input id="new-pass" type="password" size="30">';
@@ -601,19 +650,26 @@ function AddEncryptionTab() {
 	td = document.createElement('td');
 	var button = document.createElement('input');
 	button.type = 'button';
-	button.value = 'Set up main password';
+	if (cs255.localStorage.getItem('facebook-initState-' + my_username) == null || cs255.localStorage.getItem('facebook-initState-' + my_username) == 'false' ){
+		button.value = 'Set up Main password';
+	}
+	else {
+		button.value = 'Activate';
+	}
 	button.addEventListener("click", AddDBKey, false);
 	td.appendChild(button);
 	row.appendChild(td);
 
 	table.appendChild(row);
-	  
-    }
-	
-  }
+	}
 }
-
-
+function Deactivate(){
+	cs255.localStorage.setItem('facebook-active-' + my_username, false);
+	LoadKeys(); //clear keys
+	UpdateKeysTable();
+	UpdatePasswordTable();
+	
+}
 
 function AddDBKey() {
 	var g = document.getElementById('new-pass').value;
@@ -627,7 +683,7 @@ function AddDBKey() {
 	params.salt = getPasswordSalt();
 	var diskKeyData = sjcl.misc.cachedPbkdf2(g, params);
 	var diskKey = diskKeyData.key;
-	alert("Disk Key Generated: " + diskKey);
+	//alert("Disk Key Generated: " + diskKey);
 	var diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 	
 	//var key_str = JSON.stringify(keys);
@@ -639,8 +695,9 @@ function AddDBKey() {
 	
 		cs255.localStorage.setItem('facebook-correct-' + my_username, en_keyStr);
 		cs255.localStorage.setItem('facebook-initState-' + my_username, 'true'); // properly initialised
-		sessionStorage.setItem('facebook-active-' + my_username, true); //disable extension until its set up properly
+		cs255.localStorage.setItem('facebook-active-' + my_username, true); //disable extension until its set up properly
 		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str); // save password to session to avoid reprompt;
+		UpdatePasswordTable();
 	}
 	else {
 		//check if password is correctly entered
@@ -652,9 +709,10 @@ function AddDBKey() {
 					alert("Password is correct. Facebook Crypto Activated"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
-					sessionStorage.setItem('facebook-active-' + my_username, true);
+					cs255.localStorage.setItem('facebook-active-' + my_username, true);
 					LoadKeys();
 					UpdateKeysTable();
+					UpdatePasswordTable();
 					return;
 				}
 				
@@ -663,12 +721,12 @@ function AddDBKey() {
 					// shouldn't get here, mac correct but plaintext wrong
 					alert("BUG! MAC Correct but test encryption wrong"); 
 					return;
-					//sessionStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+					//cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 				}
 			}
 			catch (e){
 				// password is wrong
-				alert("password is wrong"); 
+				alert("Wrong Password Entered"); 
 				return;
 			}
 	}
@@ -749,7 +807,7 @@ function addEncryptCommentButton(e) {
 }
 
 function AddElements() {
-  if (document.URL.match(/groups/) && sessionStorage.getItem('facebook-active-' + my_username) == 'true') {
+  if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     tryAddEncryptButton();
     addEncryptCommentButton(document);
   }
@@ -773,7 +831,7 @@ function UpdateKeysTable() {
   var table = document.getElementById('cs255-keys-table');
   if (!table) return;
   table.innerHTML = '';
-
+  if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
   // ugly due to events + GreaseMonkey.
   // header
   var row = document.createElement('tr');
@@ -850,6 +908,7 @@ function UpdateKeysTable() {
   button.addEventListener("click", GenerateKeyWrapper, false);
   td.appendChild(button);
   row.appendChild(td);
+  }
 }
 
 function AddKey() {
@@ -1067,6 +1126,7 @@ Initialise();
 LoadKeys();
 AddElements();
 UpdateKeysTable();
+UpdatePasswordTable();
 RegisterChangeEvents();
 
 console.log("CS255 script finished loading.");
