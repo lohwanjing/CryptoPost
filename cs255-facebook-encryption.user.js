@@ -201,8 +201,11 @@ function LoadKeys() {
 			keys = JSON.parse(de_saved);
 		}
 		catch (e) {
-			alert("Cannot Decrypt Keys");
-			keys = JSON.parse(saved);
+			alert("Cannot Decrypt Keys. Please re-enter your password and try again");
+			//keys = JSON.parse(saved);
+			sessionStorage.clear();
+			location.reload(true);
+			//cs255.localStorage.setItem('facebook-active-' + my_username, false);
 		}
 	}
   }
@@ -390,8 +393,16 @@ function Initialise() {
   }
   
   else if (initState){ // initialised and working
+    //get and store password
+     getPassword();
+		
+		
+   }
   
-     //check if password correctly entered
+  // alert("End Init User name " + my_username);
+}
+function getPassword(){
+	  //check if password correctly entered
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
    // alert("Should Prompt for password" + diskKey_str);
    var diskKey;
@@ -445,32 +456,24 @@ function Initialise() {
 		
 		
    }
-  }
-  // alert("End Init User name " + my_username);
-}
+  
 
+
+
+}
 function getPasswordKey(){
+   getPassword();
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
+   // alert("Should Prompt for password" + diskKey_str);
    var diskKey;
+   
    if (diskKey_str){
-      // key already present
+      // key already present // should be always true
 	  //alert("Disk Key Generated: " + diskKey);
 	  diskKey = sjcl.codec.base64.toBits(diskKey_str);
    }
    else {
-		//prompt for password
-		var password = prompt("Please enter your encryption password. This does nothing ", null);
-		
-		var defaultP = "CHROME";
-		var params ={};
-		params.salt = getPasswordSalt();
-		//params.salt = getPasswordSalt();
-		var diskKeyData = sjcl.misc.cachedPbkdf2(defaultP, params);
-		diskKey = diskKeyData.key;
-		//alert("Disk Key Generated: " + diskKey);
-		diskKey_str = sjcl.codec.base64.fromBits(diskKey);
-		//alert("Disk Key Generated: " + diskKey);
-		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
+		alert("BUG! "); // should not ever happen
    }
    return diskKey;
 }
@@ -609,6 +612,9 @@ function UpdatePasswordTable() {
 	th = document.createElement('th');
 	th.innerHTML = "&nbsp;";
 	row.appendChild(th);
+	th = document.createElement('th');
+	th.innerHTML = "&nbsp;";
+	row.appendChild(th);
 	table.appendChild(row);
 	// add generation line
 	row = document.createElement('tr');
@@ -626,6 +632,17 @@ function UpdatePasswordTable() {
 	button.value = 'Deactivate';
 	
 	button.addEventListener("click", Deactivate, false);
+	td.appendChild(button);
+	row.appendChild(td);
+	
+	td = document.createElement('td');
+    row.appendChild(td);
+	button = document.createElement('input');
+	button.type = 'button';
+	
+	button.value = 'Reset';
+	
+	button.addEventListener("click", ClearUserData, false);
 	td.appendChild(button);
 	row.appendChild(td);
 
@@ -659,16 +676,51 @@ function UpdatePasswordTable() {
 	button.addEventListener("click", AddDBKey, false);
 	td.appendChild(button);
 	row.appendChild(td);
+	
+	td = document.createElement('td');
+    row.appendChild(td);
+	button = document.createElement('input');
+	button.type = 'button';
+	
+	button.value = 'Reset';
+	
+	button.addEventListener("click", ClearUserData, false);
+	td.appendChild(button);
+	row.appendChild(td);
 
 	table.appendChild(row);
 	}
 }
+
+function ClearUserData(){
+	var r=confirm("This will delete all stored data for this user. Are you sure?");
+		if (r==true) {
+		    cs255.localStorage.setItem('facebook-initState-' + my_username, false);
+		    cs255.localStorage.setItem('facebook-active-' + my_username, false);
+			keys = {};
+			cs255.localStorage.setItem('facebook-correct-' + my_username, null);
+			cs255.localStorage.setItem('facebook-keys-' + my_username, null);
+			sessionStorage.clear();
+			location.reload(true);
+		}
+		else {
+			return;
+		}
+	
+}
+
 function Deactivate(){
 	cs255.localStorage.setItem('facebook-active-' + my_username, false);
 	LoadKeys(); //clear keys
 	UpdateKeysTable();
 	UpdatePasswordTable();
 	
+}
+
+function resetKeys(){
+	keys = {};
+	SaveKeys();
+	LoadKeys();
 }
 
 function AddDBKey() {
@@ -697,6 +749,8 @@ function AddDBKey() {
 		cs255.localStorage.setItem('facebook-initState-' + my_username, 'true'); // properly initialised
 		cs255.localStorage.setItem('facebook-active-' + my_username, true); //disable extension until its set up properly
 		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str); // save password to session to avoid reprompt;
+		resetKeys();
+		UpdateKeysTable();
 		UpdatePasswordTable();
 	}
 	else {
