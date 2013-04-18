@@ -143,14 +143,12 @@ function GenerateKey(group) {
 // Take the current group keys, and save them to disk.
 function SaveKeys() {
   
-  // CS255-todo: plaintext keys going to disk?
+  if (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
   
-  //sjcl.misc.cachedPbkdf2(chromePassword)
-  
-  var key_str = JSON.stringify(keys);
-  //var en_keyStr = 
-  var en_keyStr = sjcl.json.encrypt(getPasswordKey(), key_str)
-  cs255.localStorage.setItem('facebook-keys-' + my_username, en_keyStr);
+	var key_str = JSON.stringify(keys);
+	var en_keyStr = sjcl.json.encrypt(getPasswordKey(), key_str)
+	cs255.localStorage.setItem('facebook-keys-' + my_username, en_keyStr);
+  }
 }
 
 function getPasswordKey(){
@@ -195,15 +193,17 @@ function getPasswordSalt(){
 // Load the group keys from disk.
 function LoadKeys() {
   keys = {}; // Reset the keys.
+  if (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
-  if (saved) {
-    try {
-		var de_saved =  sjcl.json.decrypt(getPasswordKey(), saved);
-		keys = JSON.parse(de_saved);
-	}
-	catch (e) {
-		alert("Cannot Decrypt Keys");
-		keys = JSON.parse(saved);
+	if (saved) {
+		try {
+			var de_saved =  sjcl.json.decrypt(getPasswordKey(), saved);
+			keys = JSON.parse(de_saved);
+		}
+		catch (e) {
+			alert("Cannot Decrypt Keys");
+			keys = JSON.parse(saved);
+		}
 	}
   }
 }
@@ -367,12 +367,17 @@ function SetupUsernames() {
 }
 
 function Initialise() {
-  alert("Init Started");
-  sessionStorage.setItem('facebook-active-' + my_username, true);
+  // initialise session variable if not present
+  alert("Init User name " + my_username);
+  if (!sessionStorage.getItem('facebook-active-' + my_username)){
+	sessionStorage.setItem('facebook-active-' + my_username, true);
+  }
+  //alert("Init Started");
+  //sessionStorage.setItem('facebook-active-' + my_username, true);
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
-  alert("Init " + initState);
+  //alert("Init " + initState);
   var promptState = cs255.localStorage.getItem('facebook-promptState-' + my_username);
-  alert("Prompt " + promptState);
+  //alert("Prompt " + promptState);
   if (!initState && !promptState) {
     // user has never used facebook extension before
 	
@@ -384,19 +389,19 @@ function Initialise() {
      alert("FacebookCrypto has not been properly initialised. Please proceed to your facebook settings page to set it up");
   }
   
-  else if (initState && sessionStorage.getItem('facebook-active-' + my_username)){ // initialised and working
+  else if (initState){ // initialised and working
   
      //check if password correctly entered
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
-    alert("Should Prompt for password" + diskKey_str);
+   // alert("Should Prompt for password" + diskKey_str);
    var diskKey;
    if (diskKey_str){
       // key already present
 	  //do nothing
    }
    else {
-        alert("check active " + sessionStorage.getItem('facebook-active-' + my_username));
-		alert("check active equality " + (sessionStorage.getItem('facebook-active-' + my_username) == 'true'));
+        //alert("check active " + sessionStorage.getItem('facebook-active-' + my_username));
+		//alert("check active equality " + (sessionStorage.getItem('facebook-active-' + my_username) == 'true'));
          while (sessionStorage.getItem('facebook-active-' + my_username) == 'true'){
 		//prompt for password
 		var password = prompt("Please enter your encryption password. Press cancel to deactivate FacebookCrypto", null);
@@ -441,6 +446,7 @@ function Initialise() {
 		
    }
   }
+   alert("End Init User name " + my_username);
 }
 
 function getPasswordKey(){
@@ -480,7 +486,7 @@ function hasClass(element, cls) {
 }
 
 function DocChanged(e) {
-  if (document.URL.match(/groups/)) {
+  if (document.URL.match(/groups/) && sessionStorage.getItem('facebook-active-' + my_username) == 'true') {
     //Check for adding encrypt button for comments
     if (e.target.nodeType != 3) {
       decryptTextOfChildNodes(e.target);
@@ -627,10 +633,45 @@ function AddDBKey() {
 	//var key_str = JSON.stringify(keys);
 	//var en_keyStr = 
 	var en_keyStr = sjcl.json.encrypt(diskKey, "Correctness Check")
-	cs255.localStorage.setItem('facebook-correct-' + my_username, en_keyStr);
-	cs255.localStorage.setItem('facebook-initState-' + my_username, 'true'); // properly initialised
-	sessionStorage.setItem('facebook-active-' + my_username, true); //disable extension until its set up properly
-	sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str); // save password to session to avoid reprompt;
+	if (cs255.localStorage.getItem('facebook-initState-' + my_username) == null || cs255.localStorage.getItem('facebook-initState-' + my_username) == 'false' ){
+	
+		// totally clean state
+	
+		cs255.localStorage.setItem('facebook-correct-' + my_username, en_keyStr);
+		cs255.localStorage.setItem('facebook-initState-' + my_username, 'true'); // properly initialised
+		sessionStorage.setItem('facebook-active-' + my_username, true); //disable extension until its set up properly
+		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str); // save password to session to avoid reprompt;
+	}
+	else {
+		//check if password is correctly entered
+	    var en_correctStr = cs255.localStorage.getItem('facebook-correct-' + my_username);
+			try {
+				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
+			
+				if (de_correctStr == "Correctness Check") {
+					alert("Password is correct. Facebook Crypto Activated"); 
+					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
+					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
+					sessionStorage.setItem('facebook-active-' + my_username, true);
+					LoadKeys();
+					UpdateKeysTable();
+					return;
+				}
+				
+				
+				else {
+					// shouldn't get here, mac correct but plaintext wrong
+					alert("BUG! MAC Correct but test encryption wrong"); 
+					return;
+					//sessionStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+				}
+			}
+			catch (e){
+				// password is wrong
+				alert("password is wrong"); 
+				return;
+			}
+	}
   
   
 }
@@ -708,7 +749,7 @@ function addEncryptCommentButton(e) {
 }
 
 function AddElements() {
-  if (document.URL.match(/groups/)) {
+  if (document.URL.match(/groups/) && sessionStorage.getItem('facebook-active-' + my_username) == 'true') {
     tryAddEncryptButton();
     addEncryptCommentButton(document);
   }
@@ -945,6 +986,8 @@ function escapeHtml(string) {
 
 function DecryptMsg(msg) {
   // we mark the box with the class "decrypted" to prevent attempting to decrypt it multiple times.
+  
+  //NEW only decrypt if extension is active
   if (!/decrypted/.test(msg.className)) {
     var txt = GetMsgTextForDecryption(msg);
 
