@@ -1,23 +1,9 @@
-// ==UserScript==
-// @namespace      CS255-Loh
-// @name           CS255-Loh
-// @description    CS255-Loh - CS255 Assignment 1
-// @version        1.5
-//
-// 
-// @include        http://www.facebook.com/*
-// @include        https://www.facebook.com/*
-// @exclude        http://www.facebook.com/messages/*
-// @exclude        https://www.facebook.com/messages/*
-// @exclude        http://www.facebook.com/events/*
-// @exclude        https://www.facebook.com/events/*
-// ==/UserScript==
 
 /*
-  Step 1: change @namespace, @name, and @description above.
-  Step 2: Change the filename to the format "CS255-Lastname1-Lastname2.user.js"
-  Step 3: Install this file as an (unpacked) Chrome extension using manifest.json.
-  Step 4: Fill in the functions below.
+  Base code from Stanford CS255 Cryptography course, with all relevant rights. http://crypto.stanford.edu/~dabo/cs255/
+  Stanford Javascript Crypto Library for AES implementation http://crypto.stanford.edu/sjcl/
+  Modified by me for a more user friendly experience as well, as well as filling in the missing parts to give it full functionality.
+  @author Loh Wan Jing
 */
 
 // Strict mode makes it easier to catch errors.
@@ -30,14 +16,10 @@ var keys = {}; // association map of keys: group -> key
 var keyGenCipher;
 var keyGenCounter;
 
-var chromePassword = "Password";
-var chromeSalt;
-
-var active = true;
 
 
-// Some initialization functions are called at the very end of this script.
-// You only have to edit the top portion.
+
+
 
 // Return the encryption of the message for the given group, in the form of a string.
 //
@@ -45,13 +27,9 @@ var active = true;
 // @param {String} group Group name.
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
-  // CS255-DONE: encrypt the plainText, using key for the group.
   
    var key64 = keys[group];
-   
-   
    var key = sjcl.codec.base64.toBits(key64);
-   
    var iv = GetRandomValues(4);
    var iv64 = sjcl.codec.base64.fromBits(iv);
  
@@ -70,11 +48,8 @@ function Encrypt(plainText, group) {
 // @return {String} Decryption of the ciphertext.
 function Decrypt(cipherText, group) {
 
-  // CS255-DONE: implement decryption on encrypted messages
    try {
    var key64 = keys[group];
-   
-   //alert(key64);
    
    var key = sjcl.codec.base64.toBits(key64);
    
@@ -85,17 +60,6 @@ function Decrypt(cipherText, group) {
    catch(e) {
      throw "not encrypted";
   }
-  /*
-  if (cipherText.indexOf('rot13:') == 0) {
-
-    // decrypt, ignore the tag.
-    var decryptedMsg = rot13(cipherText.slice(6));
-    return decryptedMsg;
-
-  } else {
-    throw "not encrypted";
-  }
-  */
 }
 
 
@@ -105,8 +69,6 @@ function Decrypt(cipherText, group) {
 //
 // @param {String} group Group name.
 function GenerateKey(group) {
-
-  // CS255-todo: Well this needs some work...
   if (keyGenCipher == null) {
       var keyGenKey = GetRandomValues(8);
 	  keyGenCipher = new sjcl.cipher.aes(keyGenKey);
@@ -131,16 +93,13 @@ function GenerateKey(group) {
    
   //convert to base64 for easier reading and copying
   var base64str = sjcl.codec.base64.fromBits(keyArray);
-  //var decodedStr = sjcl.codec.base64.toBits(base64str);
   var key = base64str;
-  // var key = keyArray + "," + base64str + "," + decodedStr;
-  // var decrypt = keyGenCipher.decrypt(ctext);
 
   keys[group] = key;
   SaveKeys();
 }
 
-// Take the current group keys, and save them to disk.
+// Take the current group keys, and save them in encrypted form to disk.
 function SaveKeys() {
   
   if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
@@ -151,42 +110,22 @@ function SaveKeys() {
   }
 }
 
-function getPasswordKey(){
-   var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
-   var diskKey;
-   if (diskKey_str){
-      // key already present
-	  //alert("Disk Key Generated: " + diskKey);
-	  diskKey = sjcl.codec.base64.toBits(diskKey_str);
-   }
-   else {
-		//prompt for password
-		var password = prompt("Please enter your encryption password. This does nothing ","CHROME");
-		var defaultP = "CHROME";
-		var params ={};
-		params.salt = getPasswordSalt();
-		//params.salt = getPasswordSalt();
-		var diskKeyData = sjcl.misc.cachedPbkdf2(defaultP, params);
-		diskKey = diskKeyData.key;
-		//alert("Disk Key Generated: " + diskKey);
-		diskKey_str = sjcl.codec.base64.fromBits(diskKey);
-		//alert("Disk Key Generated: " + diskKey);
-		sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
-   }
-   return diskKey;
+//generate 64 bit salt for PKDF
+function generatePasswordSalt(){
+	var salt = keyGenCounter = GetRandomValues(2);
+	var saltStr = salt = sjcl.codec.base64.fromBits(salt);
+	cs255.localStorage.setItem('facebook-dbSalt-' + my_username, saltStr);
 }
 
+//get 64 bit salt for PKDF
 function getPasswordSalt(){
    var saltStr =  cs255.localStorage.getItem('facebook-dbSalt-' + my_username);
    var salt;
-   if (saltStr){
-		salt = sjcl.codec.base64.toBits(saltStr);
+   if (!saltStr){
+		generatePasswordSalt();
+		saltStr =  cs255.localStorage.getItem('facebook-dbSalt-' + my_username); // get just created salt string
    }
-   else {
-		salt = keyGenCounter = GetRandomValues(2);
-		saltStr = salt = sjcl.codec.base64.fromBits(salt);
-		cs255.localStorage.setItem('facebook-dbSalt-' + my_username, saltStr);
-   }
+   salt = sjcl.codec.base64.toBits(saltStr);
    return salt;
 }
 
@@ -211,60 +150,7 @@ function LoadKeys() {
   }
 }
 
-
-
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-//
-// Using the AES primitives from SJCL for this assignment.
-//
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-
-/*
-  Here are the basic cryptographic functions (implemented farther down)
-  you need to do the assignment:
-
-  function sjcl.cipher.aes(key)
-
-  This function creates a new AES encryptor/decryptor with a given key.
-  Note that the key must be an array of 4, 6, or 8 32-bit words for the
-  function to work.  For those of you keeping score, this constructor does
-  all the scheduling needed for the cipher to work. 
-
-  encrypt: function(plaintext)
-
-  This function encrypts the given plaintext.  The plaintext argument
-  should take the form of an array of four (32-bit) integers, so the plaintext
-  should only be one block of data.
-
-  decrypt: function(ciphertext)
-
-  This function decrypts the given ciphertext.  Again, the ciphertext argument
-  should be an array of 4 integers.
-
-  A silly example of this in action:
-
-    var key1 = new Array(8);
-    var cipher = new sjcl.cipher.aes(key1);
-    var dumbtext = new Array(4);
-    dumbtext[0] = 1; dumbtext[1] = 2; dumbtext[2] = 3; dumbtext[3] = 4;
-    var ctext = cipher.encrypt(dumbtext);
-    var outtext = cipher.decrypt(ctext);
-
-  Obviously our key is just all zeroes in this case, but this should illustrate
-  the point.
-*/
-
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-//
-// Should not _have_ to change anything below here.
-// Helper functions and sample code.
-//
-/////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
-
+// local storage for extension. This allows it to work (somewhat) between http://www.facebook.com and https://www.facebook.com
 var cs255 = {
   localStorage: {
     setItem: function(key, value) {
@@ -280,22 +166,6 @@ var cs255 = {
       chrome.storage.local.clear();
     }
   }
-  /*
-  sessionStorage: {
-    setItem: function(key, value) {
-      sessionStorage.setItem(key, value);
-      var newEntries = {};
-      newEntries[key] = value;
-      chrome.storage.session.set(newEntries);
-    },
-    getItem: function(key) {
-      return sessionStorage.getItem(key);
-    },
-    clear: function() {
-      chrome.storage.session.clear();
-    }
-  }
-  */
 }
 
 if (typeof chrome.storage === "undefined") {
@@ -343,16 +213,7 @@ function assert(exp, message) {
   }
 }
 
-// Very primitive encryption.
-function rot13(text) {
-  // JS rot13 from http://jsfromhell.com/string/rot13
-  return text.replace(/[a-zA-Z]/g,
-
-  function(c) {
-    return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
-  });
-}
-
+//From Stanford CS255 base code - get facebook user name
 function SetupUsernames() {
   // get who you are logged in as
   var meta = document.getElementsByClassName('navItem tinyman')[0];
@@ -365,22 +226,18 @@ function SetupUsernames() {
   usernameMatched = usernameMatched.replace(/\?/, '');
   usernameMatched = usernameMatched.replace(/profile\.phpid=/, '');
   my_username = usernameMatched; // Update global.
-  //alert(usernameMatched);
-  //alert(my_username);
 }
 
+//initialise most needed variables such as passwords, and prompts for first time users
 function Initialise() {
-  // initialise session variable if not present
-  //alert("Init User name " + my_username);
+  
+  // initialise active variable if not present, which defines if extension executes
   if (!cs255.localStorage.getItem('facebook-active-' + my_username)){
 	cs255.localStorage.setItem('facebook-active-' + my_username, true);
   }
-  //alert("Init Started");
-  //cs255.localStorage.setItem('facebook-active-' + my_username, true);
+ 
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
-  //alert("Init " + initState);
   var promptState = cs255.localStorage.getItem('facebook-promptState-' + my_username);
-  //alert("Prompt " + promptState);
   if (!initState && !promptState) {
     // user has never used facebook extension before
 	
@@ -395,24 +252,20 @@ function Initialise() {
   else if (initState){ // initialised and working
     //get and store password
      getPassword();
-		
-		
    }
   
-  // alert("End Init User name " + my_username);
 }
+//checks if password has been entered previously and if the password is correct
 function getPassword(){
 	  //check if password correctly entered
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
-   // alert("Should Prompt for password" + diskKey_str);
    var diskKey;
    if (diskKey_str){
       // key already present
 	  //do nothing
    }
    else {
-        //alert("check active " + cs255.localStorage.getItem('facebook-active-' + my_username));
-		//alert("check active equality " + (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'));
+        
          while (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
 		//prompt for password
 		var password = prompt("Please enter your encryption password.\nPress cancel to deactivate FacebookCrypto", null);
@@ -449,18 +302,14 @@ function getPassword(){
 		
 		}
 		else {
-		   //deactivate extension
+		   //deactivate extension, user clicked cancel and did not enter a password
 		   cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 		}
-		}
-		
-		
+	  }
    }
-  
-
-
-
 }
+
+//use PKDF to get the derived key from the password
 function getPasswordKey(){
    getPassword();
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
@@ -562,7 +411,7 @@ function AddEncryptionTab() {
 	
 	  var h2 = document.createElement('h2');
       h2.setAttribute("class", "crypto");
-      h2.innerHTML = "Password Management";
+      h2.innerHTML = "Facebook Crypto - Key Management";
       div.appendChild(h2);
 
       var table = document.createElement('table');
@@ -575,9 +424,8 @@ function AddEncryptionTab() {
       table.setAttribute('width', "80%");
       div.appendChild(table);
 	    
-	  
-	  
-		//h2 = document.createElement('h2');
+
+	   //h2 = document.createElement('h2');
       //h2.setAttribute("class", "crypto");
       //h2.innerHTML = "Group Keys";
       //div.appendChild(h2);
@@ -597,6 +445,7 @@ function AddEncryptionTab() {
   }
 }
 
+//Table to allow the user to set the password for the extension
 function UpdatePasswordTable() {
   var table = document.getElementById('cs255-Password-table');
   if (!table) return;
@@ -695,6 +544,7 @@ function UpdatePasswordTable() {
 	}
 }
 
+//deletes all user data for the currently logged in user
 function ClearUserData(){
 	var r=confirm("This will delete all stored data for this user.\nDo you wish to proceed?");
 		if (r==true) {
@@ -712,6 +562,7 @@ function ClearUserData(){
 	
 }
 
+//deactivates the extension
 function Deactivate(){
 	cs255.localStorage.setItem('facebook-active-' + my_username, false);
 	LoadKeys(); //clear keys
@@ -720,12 +571,14 @@ function Deactivate(){
 	
 }
 
+//sets keys to empty set
 function resetKeys(){
 	keys = {};
 	SaveKeys();
 	LoadKeys();
 }
 
+//sets up main password
 function AddDBKey() {
 	var g = document.getElementById('new-pass').value;
   
@@ -738,7 +591,7 @@ function AddDBKey() {
 	params.salt = getPasswordSalt();
 	var diskKeyData = sjcl.misc.cachedPbkdf2(g, params);
 	var diskKey = diskKeyData.key;
-	//alert("Disk Key Generated: " + diskKey);
+	
 	var diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 	
 	//var key_str = JSON.stringify(keys);
@@ -1122,7 +975,13 @@ function DecryptMsg(msg) {
     msg.className += " decrypted";
   }
 }
-
+ /** Javascript cryptography implementation - Stanford Javascript Crypto Library - Minified version 
+    * Copyright to the authors below
+    *
+    * @author Emily Stark
+    * @author Mike Hamburg
+    * @author Dan Boneh
+    */
 
 var sjcl={cipher:{},hash:{},keyexchange:{},mode:{},misc:{},codec:{},exception:{corrupt:function(a){this.toString=function(){return"CORRUPT: "+this.message};this.message=a},invalid:function(a){this.toString=function(){return"INVALID: "+this.message};this.message=a},bug:function(a){this.toString=function(){return"BUG: "+this.message};this.message=a},notReady:function(a){this.toString=function(){return"NOT READY: "+this.message};this.message=a}}};
 if(typeof module!="undefined"&&module.exports)module.exports=sjcl;

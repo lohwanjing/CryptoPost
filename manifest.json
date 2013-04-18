@@ -19,9 +19,9 @@
   "web_accessible_resources": ["sjcl.js"],
   "permissions": ["storage"],
   "converted_from_user_script": true,
-  "description": "CS255-Loh - CS255 Assignment 1",
+  "description": "AES Encryption for Facebook Groups",
   "key": "ad44N+Oz4atwVsSOFmiueoWpb/1JG9aQpjLf4eorMWU=",
-  "name": "CS255-Loh",
+  "name": "Facebook Crypto",
   "version": "1.5",
   "manifest_version": 2
 }
