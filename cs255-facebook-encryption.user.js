@@ -237,16 +237,12 @@ function Initialise() {
   }
  
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
-  var promptState = cs255.localStorage.getItem('facebook-promptState-' + my_username);
-  if (!initState && !promptState) {
+  if (!initState || initState == 'false') {
     // user has never used facebook extension before
-	
+	alert(initState);
 	alert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up");
 	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
-	cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
-  }
-  else if (!initState) {
-     alert("FacebookCrypto has not been properly initialised. Please proceed to your facebook settings page to set it up");
+	//cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
   
   else if (initState){ // initialised and working
@@ -303,7 +299,8 @@ function getPassword(){
 		}
 		else {
 		   //deactivate extension, user clicked cancel and did not enter a password
-		   cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+		   //cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+		   Deactivate();
 		}
 	  }
    }
@@ -338,6 +335,9 @@ function hasClass(element, cls) {
 }
 
 function DocChanged(e) {
+   if (document.URL.match(/groups/)){
+    AddActivateButton();
+   }
   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     //Check for adding encrypt button for comments
     if (e.target.nodeType != 3) {
@@ -565,9 +565,11 @@ function ClearUserData(){
 //deactivates the extension
 function Deactivate(){
 	cs255.localStorage.setItem('facebook-active-' + my_username, false);
+	sessionStorage.clear();
 	LoadKeys(); //clear keys
 	UpdateKeysTable();
 	UpdatePasswordTable();
+	
 	
 }
 
@@ -721,8 +723,77 @@ function AddElements() {
     tryAddEncryptButton();
     addEncryptCommentButton(document);
   }
-  AddEncryptionTab()
+  AddEncryptionTab();
+  if (document.URL.match(/groups/)){
+	AddActivateButton();
+  }
 }
+
+function AddActivateButton(){
+   // Check if it already exists.
+  if (document.getElementById('active-button')) {
+    return;
+  }
+
+  var activeWrapper = document.createElement("span");
+  activeWrapper.style.float = "right";
+
+
+  var activeLabel = document.createElement("label");
+  activeLabel.setAttribute("class", "uiButton");
+
+  var activeButton = document.createElement("input");
+  if (!cs255.localStorage.getItem('facebook-active-' + my_username) ||  cs255.localStorage.getItem('facebook-active-' + my_username) == 'false'){
+	activeButton.setAttribute("value", "Activate");
+  }
+  else {
+	activeButton.setAttribute("value", "Deactivate");
+  }
+  activeButton.setAttribute("type", "button");
+  activeButton.setAttribute("id", "active-button");
+  activeButton.setAttribute("class", "active-button");
+  activeButton.addEventListener("click", DoActive, false);
+
+  activeLabel.appendChild(activeButton);
+  activeWrapper.appendChild(activeLabel);
+  
+  var listItem = document.createElement("li");
+  listItem.appendChild(activeWrapper);
+
+  var liParent;
+  var ulParent;
+  try {
+    liParent = document.getElementById("u_0_6");
+	ulParent = liParent.getElementsByTagName("ul")[0];
+  } catch(e) {
+	alert(e);
+    return;
+  }
+  ulParent.appendChild(listItem);
+
+}
+
+function DoActive(){
+	var activeButton = document.getElementById('active-button');
+	if (!activeButton) {
+	//button does not exist
+	alert("BUG!");
+    return;
+	}
+	else {
+		if (!cs255.localStorage.getItem('facebook-active-' + my_username) ||  cs255.localStorage.getItem('facebook-active-' + my_username) == 'false'){
+		//prompt for password
+			cs255.localStorage.setItem('facebook-active-' + my_username, true);
+			Initialise();
+		}
+		else {
+			Deactivate();
+		}
+		location.reload(true);
+		
+	}
+}
+
 
 function GenerateKeyWrapper() {
   var group = document.getElementById('gen-key-group').value;
