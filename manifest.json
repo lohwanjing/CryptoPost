@@ -19,7 +19,6 @@
   "permissions": ["storage"],
   "converted_from_user_script": true,
   "description": "AES Encryption for Facebook Groups",
-  "key": "ad44N+Oz4atwVsSOFmiueoWpb/1JG9aQpjLf4eorMWU=",
   "name": "Facebook Crypto",
   "version": "1.5",
   "manifest_version": 2
