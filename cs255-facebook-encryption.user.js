@@ -264,7 +264,7 @@ function getPassword(){
         
          while (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
 		//prompt for password
-		var password = prompt("Please enter your encryption password.\nPress cancel to deactivate FacebookCrypto", null);
+		var password = prompt("Please enter your encryption password.\nPress cancel to disable FacebookCrypto", null);
 		if (password){
 		   //regenerate derived key
 			var params ={};
@@ -278,7 +278,7 @@ function getPassword(){
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
 			
 				if (de_correctStr == "Correctness Check") {
-					alert("FacebookCrypto is now activated"); 
+					alert("FacebookCrypto is now enabled"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
 					return;
@@ -456,7 +456,7 @@ function UpdatePasswordTable() {
   var row = document.createElement('tr');
   var th = document.createElement('th');
   if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
-	th.innerHTML = "Facebook Crypto is activated";
+	th.innerHTML = "Facebook Crypto is enabled";
 	row.appendChild(th);
 	th = document.createElement('th');
 	th.innerHTML = "&nbsp;";
@@ -478,7 +478,7 @@ function UpdatePasswordTable() {
 	var button = document.createElement('input');
 	button.type = 'button';
 	
-	button.value = 'Deactivate';
+	button.value = 'Disable';
 	
 	button.addEventListener("click", Deactivate, false);
 	td.appendChild(button);
@@ -523,7 +523,7 @@ function UpdatePasswordTable() {
 		button.value = 'Set Up Main Password';
 	}
 	else {
-		button.value = 'Activate';
+		button.value = 'Enable';
 	}
 	button.addEventListener("click", AddDBKey, false);
 	td.appendChild(button);
@@ -744,10 +744,10 @@ function AddActivateButton(){
 
   var activeButton = document.createElement("input");
   if (!cs255.localStorage.getItem('facebook-active-' + my_username) ||  cs255.localStorage.getItem('facebook-active-' + my_username) == 'false'){
-	activeButton.setAttribute("value", "Activate");
+	activeButton.setAttribute("value", "Enable FB Crypto");
   }
   else {
-	activeButton.setAttribute("value", "Deactivate");
+	activeButton.setAttribute("value", "Disable FB Crypto");
   }
   activeButton.setAttribute("type", "button");
   activeButton.setAttribute("id", "active-button");
