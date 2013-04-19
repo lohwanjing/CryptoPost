@@ -974,10 +974,10 @@ function DecryptMsg(msg) {
       var group = CurrentGroup();
       var decryptedMsg = Decrypt(txt, group);
       decryptedMsg = escapeHtml(decryptedMsg);
-      displayHTML = '<font color="#00AA00">Decrypted message: ' + decryptedMsg + '</font><br><hr>' + txt;
+      displayHTML = '<font color="#00AA00">' + decryptedMsg;
     }
     catch (e) {
-      displayHTML = '<font color="#FF88">Could not decrypt (' + e + ').</font><br><hr>' + txt;
+      displayHTML = txt;
     }
 
     SetMsgText(msg, displayHTML);
