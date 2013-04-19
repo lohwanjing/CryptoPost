@@ -239,8 +239,9 @@ function Initialise() {
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
   if (!initState || initState == 'false') {
     // user has never used facebook extension before
-	alert(initState);
-	alert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up");
+	//alert(my_username);
+	//alert(initState);
+	alert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up.\nIf you have already setup your account, try refreshing the page.");
 	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 	//cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
@@ -417,7 +418,7 @@ function AddEncryptionTab() {
       var table = document.createElement('table');
       table.id = 'cs255-Password-table';
       table.style.borderCollapse = "collapse";
-      table.setAttribute("class", "crypto");
+      table.setAttribute("class", "crypto uiTable");
       table.setAttribute('cellpadding', 3);
       table.setAttribute('cellspacing', 1);
       table.setAttribute('border', 1);
@@ -433,7 +434,7 @@ function AddEncryptionTab() {
       table = document.createElement('table');
       table.id = 'cs255-keys-table';
       table.style.borderCollapse = "collapse";
-      table.setAttribute("class", "crypto");
+      table.setAttribute("class", "crypto uiTable");
       table.setAttribute('cellpadding', 3);
       table.setAttribute('cellspacing', 1);
       table.setAttribute('border', 1);
@@ -765,11 +766,11 @@ function AddActivateButton(){
   try {
     liParent = document.getElementById("u_0_6");
 	ulParent = liParent.getElementsByTagName("ul")[0];
+	ulParent.appendChild(listItem);
   } catch(e) {
-	alert(e);
+	//alert(e);
     return;
   }
-  ulParent.appendChild(listItem);
 
 }
 
