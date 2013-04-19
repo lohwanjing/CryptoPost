@@ -828,6 +828,15 @@ function AddKey() {
     return;
   }
   var k = document.getElementById('new-key-key').value;
+  try {
+	var keyBitArray = sjcl.codec.base64.toBits(k);
+	assert(sjcl.bitArray.bitLength(keyBitArray) == 256, "Incorrect key size");
+  }
+  catch (e){
+     alert("Invalid key entered");
+	 return;
+  }
+  
   keys[g] = k;
   SaveKeys();
   UpdateKeysTable();
