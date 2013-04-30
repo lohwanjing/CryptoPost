@@ -237,7 +237,7 @@ function Initialise() {
   }
  
   var initState = cs255.localStorage.getItem('facebook-initState-' + my_username);
-  if (!initState || initState == 'false') {
+  if (!initState || initState == 'false' || initState == 'null') {
     // user has never used facebook extension before
 	//alert(my_username);
 	//alert(initState);
@@ -246,7 +246,7 @@ function Initialise() {
 	//cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
   
-  else if (initState){ // initialised and working
+  else if (initState == 'true'){ // initialised and working
     //get and store password
      getPassword();
    }
@@ -338,6 +338,7 @@ function hasClass(element, cls) {
 function DocChanged(e) {
    if (document.URL.match(/groups/)){
     AddActivateButton();
+	AddKeyWrapper();
    }
   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     //Check for adding encrypt button for comments
@@ -727,6 +728,7 @@ function AddElements() {
   AddEncryptionTab();
   if (document.URL.match(/groups/)){
 	AddActivateButton();
+	AddKeyWrapper();
   }
 }
 
@@ -774,6 +776,234 @@ function AddActivateButton(){
 
 }
 
+function AddKeyWrapper(){
+// Check if it already exists.
+  if (document.getElementById('keygen-wrapper')) {
+    return;
+  }
+  var group = CurrentGroup();
+  
+	//look for menu
+	var menudiv = document.getElementById('pagelet_group_actions')
+	var menu = getElementsByClassName(menudiv,"uiMenuInner")[0];
+
+	//add separator
+	var separator = document.createElement("li");
+	separator.setAttribute("class", "uiMenuSeparator");
+	menu.appendChild(separator);
+	
+	var viewText = "View CryptoKey";
+	var genText = "Generate New CryptoKey";
+	var addText = "Add CryptoKey";
+	
+	if (group in keys){
+	  addText = "Edit Existing CryptoKey";
+	
+	}
+	
+	//add keyview 
+	var keyViewer = generateCustomListElement(viewText, DoKeyView);
+	
+	//add keygen element
+	var keygen = generateCustomListElement(genText, DoKeyGen);
+	//keygen.setAttribute("class", "uiMenuItem");
+	keygen.setAttribute("id", "keygen-wrapper");
+	//keygen.setAttribute("data-label", "Generate New Key");
+	//keygen.appendChild(generateCustomAnchor("Generate New CryptoKey", DoKeyGen));
+	
+	var keyAdder = generateCustomListElement(addText, DoKeyChange);
+	
+	menu.appendChild(separator);
+	menu.appendChild(keyViewer);
+	menu.appendChild(keygen);
+	menu.appendChild(keyAdder);
+  
+}
+
+function generateAnchor(){
+   var anchor = document.createElement("a");
+   anchor.setAttribute("class", "itemAnchor");
+   anchor.setAttribute("role", "menuItem");
+   anchor.setAttribute("tabIndex", -1);
+   
+   var span = document.createElement("span");
+   span.setAttribute("class", "itemLabel fsm");
+   span.innerHTML = "Generate Group CryptoKey";
+   anchor.appendChild(span);
+   span.addEventListener("click", DoKeyGen, false);
+   
+   return anchor;
+
+}
+
+function generateCustomAnchor(label, listener){
+   var anchor = document.createElement("a");
+   anchor.setAttribute("class", "itemAnchor");
+   anchor.setAttribute("role", "menuItem");
+   anchor.setAttribute("tabIndex", -1);
+   
+   var span = document.createElement("span");
+   span.setAttribute("class", "itemLabel fsm");
+   span.innerHTML = label;
+   anchor.appendChild(span);
+   span.addEventListener("click", listener, false);
+   
+   return anchor;
+
+}
+
+function generateCustomListElement(label, listener){
+   var listEle = document.createElement("li");
+	listEle.setAttribute("class", "uiMenuItem");
+	//listEle.setAttribute("id", "keygen-wrapper");
+	listEle.setAttribute("data-label", label);
+	
+
+   var anchor = document.createElement("a");
+   anchor.setAttribute("class", "itemAnchor");
+   anchor.setAttribute("role", "menuItem");
+   anchor.setAttribute("tabIndex", -1);
+   
+   var span = document.createElement("span");
+   span.setAttribute("class", "itemLabel fsm");
+   span.innerHTML = label;
+   anchor.appendChild(span);
+   span.addEventListener("click", listener, false);
+   
+   listEle.appendChild(anchor);
+   
+   return listEle;
+
+}
+
+
+
+/*
+function AddKeyWrapper(){
+   // Check if it already exists.
+  if (document.getElementById('keygen-wrapper')) {
+    return;
+  }
+
+  var keygenWrapper = document.createElement("span");
+  keygenWrapper.style.float = "right";
+  keygenWrapper.setAttribute("id", "keygen-wrapper");
+
+  var keygenLabel = document.createElement("label");
+  keygenLabel.setAttribute("class", "uiButton");
+  //keygenLabel.setAttribute("style", "cursor: text;");
+
+  var keygenButton = document.createElement("input");
+  if (!cs255.localStorage.getItem('facebook-active-' + my_username) ||  cs255.localStorage.getItem('facebook-active-' + my_username) == 'false'){
+	//keygenButton.setAttribute("value", "Enable FB Crypto");
+  }
+  else {
+    //check if key already present
+	var group = CurrentGroup();
+	if (group in keys) {
+	   var keygenButton = document.createElement("input");
+	   keygenButton.setAttribute("value", "Key: (Scroll Right) " + keys[group]);
+	   keygenButton.setAttribute("style", "cursor: text;");
+	   //keygenButton.innerHTML = "Group Key Defined";
+	   //keygenButton.setAttribute("title", keys[group]);
+	   keygenButton.setAttribute("disabled", true);
+	   keygenLabel.appendChild(keygenButton);
+	}
+	else {
+	   var keygenButton = document.createElement("input");
+	   keygenButton.setAttribute("value", "Generate Key");
+	   //keygenButton.setAttribute("style", "cursor: text;");
+	   //keygenButton.innerHTML = "Group Key Defined";
+	   keygenButton.setAttribute("title", "Generate a new key for the group, all members must have the same key to view encrypted messages");
+	   //keygenButton.setAttribute("disabled", true);
+	   keygenButton.setAttribute("type", "button");
+	keygenButton.setAttribute("id", "keygen-button");
+    keygenButton.setAttribute("class", "keygen-button");
+    keygenButton.addEventListener("click", DoKeyGen, false);
+	   keygenLabel.appendChild(keygenButton);
+	}
+	
+	//keygenButton.setAttribute("value", "Generate a new key for the group");
+  }
+  //keygenButton.setAttribute("type", "button");
+  //keygenButton.setAttribute("id", "keygen-button");
+  //keygenButton.setAttribute("class", "keygen-button");
+  //keygenButton.addEventListener("click", DoKeyGen, false);
+
+  //keygenLabel.appendChild(keygenButton);
+  keygenWrapper.appendChild(keygenLabel);
+  
+  var listItem = document.createElement("li");
+  listItem.appendChild(keygenWrapper);
+
+  var liParent;
+  var ulParent;
+  try {
+    liParent = document.getElementById("u_0_6");
+	ulParent = liParent.getElementsByTagName("ul")[0];
+	ulParent.appendChild(listItem);
+  } catch(e) {
+	//alert(e);
+    return;
+  }
+
+}
+*/
+function DoKeyGen(){
+  var group = CurrentGroup();
+  if (group in keys){
+	 var overRide = confirm("Key exists.\nAre you sure you want to override the existing key?", null);
+		if (confirm == false){
+			return;
+		}
+  }
+ 
+  GenerateKey(group);
+  alert("Key generated for " + group + " :\n" + keys[group]);
+  location.reload(true);
+}
+
+function DoKeyView(){
+  var group = CurrentGroup();
+  if (group in keys){
+	alert(group + "'s Key :\n" + keys[group]);
+  }
+  else {
+    alert(group + " has no key stored. Either generate a new key or add in an existing key");
+  }
+}
+
+function DoKeyChange(){
+  var group = CurrentGroup();
+  var promptText = "No Key Found!\nPlease enter the new key\n"
+  var existingKey = (group in keys);
+  if (existingKey){
+	promptText = "Key already exists!\nPlease enter the new key and press Ok to override\n";
+  
+  }
+	 var newKey = prompt(promptText, null);
+		if (newKey){
+		    try {
+				var keyBitArray = sjcl.codec.base64.toBits(newKey);
+				assert(sjcl.bitArray.bitLength(keyBitArray) == 256, "Incorrect key size");
+				keys[group] = newKey;
+				SaveKeys();
+				if (existingKey){
+					alert("Key Changed");
+				}
+				else {
+				    alert("Key Added");
+				}
+				location.reload(true);
+			}
+			catch (e){
+				alert("Invalid key entered");
+				return;
+			}
+		}
+  
+}
+
 function DoActive(){
 	var activeButton = document.getElementById('active-button');
 	if (!activeButton) {
@@ -794,6 +1024,8 @@ function DoActive(){
 		
 	}
 }
+
+
 
 
 function GenerateKeyWrapper() {
@@ -1074,6 +1306,31 @@ function loadSJCL() {
     head.appendChild(script);
 }
 */
+//Credits to Dustin Diaz
+function getElementsByClassName(node,classname) {
+  if (node.getElementsByClassName) { // use native implementation if available
+    return node.getElementsByClassName(classname);
+  } else {
+    return (function getElementsByClass(searchClass,node) {
+        if ( node == null )
+          node = document;
+        var classElements = [],
+            els = node.getElementsByTagName("*"),
+            elsLen = els.length,
+            pattern = new RegExp("(^|\\s)"+searchClass+"(\\s|$)"), i, j;
+
+        for (i = 0, j = 0; i < elsLen; i++) {
+          if ( pattern.test(els[i].className) ) {
+              classElements[j] = els[i];
+              j++;
+          }
+        }
+        return classElements;
+    })(classname, node);
+  }
+}
+
+
  /** Javascript cryptography implementation - Stanford Javascript Crypto Library - Minified version 
     * Copyright to the authors below
     *
