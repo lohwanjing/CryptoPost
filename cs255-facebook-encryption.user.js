@@ -384,13 +384,28 @@ function decryptTextOfChildNodes(e) {
 
 
 function decryptTextOfChildNodes2(e) {
-  var msgs = e.getElementsByClassName('UFICommentBody');
+  var msgs = e.getElementsByClassName('UFICommentContent');
 
   if (msgs.length > 0) {
     var msgs_array = new Array();
+	var childrenArray = new Array();
     for (var i = 0; i < msgs.length; ++i) {
-      msgs_array[i] = msgs[i];
+	  var children = msgs[i].childNodes;
+		for(var j=0; j < children.length; j++) {
+			if (children[j].nodeType == 1)
+			childrenArray.push(children[j]);
+		}
     }
+	
+	for (var i = 0; i < childrenArray.length; ++i) {
+	  // only want greatgrandchildren
+	  var grandchildren = childrenArray[i].childNodes;
+		for(var j=0; j < grandchildren.length; j++) {
+			if (grandchildren[j].nodeType == 1)
+			msgs_array.push(grandchildren[j]);
+		}
+    }
+	
     for (var i = 0; i < msgs_array.length; ++i) {
       DecryptMsg(msgs_array[i]);
     }
@@ -873,6 +888,7 @@ function generateCustomListElement(label, listener){
    listEle.appendChild(anchor);
    
    return listEle;
+   return listEle;
 
 }
 
@@ -953,7 +969,8 @@ function DoKeyGen(){
   var group = CurrentGroup();
   if (group in keys){
 	 var overRide = confirm("Key exists.\nAre you sure you want to override the existing key?", null);
-		if (confirm == false){
+	    
+		if (overRide == false){
 			return;
 		}
   }
@@ -1271,6 +1288,8 @@ function DecryptMsg(msg) {
   
   //NEW only decrypt if extension is active
   if (!/decrypted/.test(msg.className)) {
+  
+	//alert(msg);
     var txt = GetMsgTextForDecryption(msg);
 
     var displayHTML;
