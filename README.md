@@ -1,4 +1,4 @@
-FacebookCrypto
+CryptoPost
 ==============
 
 AES Encryption for Facebook
