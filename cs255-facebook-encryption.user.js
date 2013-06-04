@@ -175,7 +175,7 @@ if (typeof chrome.storage === "undefined") {
 else {
   // See if there are any values stored with the extension.
   chrome.storage.local.get(null, function(onDisk) {
-    for (key in onDisk) {
+    for (var key in onDisk) {
       localStorage.setItem(key, onDisk[key]);
     }
   });
