@@ -336,10 +336,10 @@ function hasClass(element, cls) {
 }
 
 function DocChanged(e) {
-   if (document.URL.match(/groups/)){
-    AddActivateButton();
-	AddKeyWrapper();
-   }
+   //if (document.URL.match(/groups/)){
+   // AddActivateButton();
+	//AddKeyWrapper();
+   //}
   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     //Check for adding encrypt button for comments
     if (e.target.nodeType != 3) {
@@ -434,7 +434,7 @@ function AddEncryptionTab() {
       var table = document.createElement('table');
       table.id = 'cs255-Password-table';
       table.style.borderCollapse = "collapse";
-      table.setAttribute("class", "crypto uiTable");
+      table.setAttribute("class", "uiInfoTable crypto");
       table.setAttribute('cellpadding', 3);
       table.setAttribute('cellspacing', 1);
       table.setAttribute('border', 1);
@@ -450,7 +450,7 @@ function AddEncryptionTab() {
       table = document.createElement('table');
       table.id = 'cs255-keys-table';
       table.style.borderCollapse = "collapse";
-      table.setAttribute("class", "crypto uiTable");
+      table.setAttribute("class", "uiInfoTable crypto");
       table.setAttribute('cellpadding', 3);
       table.setAttribute('cellspacing', 1);
       table.setAttribute('border', 1);
@@ -743,6 +743,10 @@ function AddElements() {
   AddEncryptionTab();
   if (document.URL.match(/groups/)){
 	AddActivateButton();
+	//AddKeyWrapper();
+  }
+  if (document.URL.match(/groups/)&& cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
+	//AddActivateButton();
 	AddKeyWrapper();
   }
 }
