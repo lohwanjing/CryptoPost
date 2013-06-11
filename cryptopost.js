@@ -1,4 +1,3 @@
-
 /*
   Base code from Stanford CS255 Cryptography course, with all relevant rights. http://crypto.stanford.edu/~dabo/cs255/
   Stanford Javascript Crypto Library for AES implementation http://crypto.stanford.edu/sjcl/
