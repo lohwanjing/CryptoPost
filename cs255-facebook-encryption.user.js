@@ -140,7 +140,7 @@ function LoadKeys() {
 			keys = JSON.parse(de_saved);
 		}
 		catch (e) {
-			alert("Cannot Decrypt Keys. Please re-enter your password and try again");
+			customAlert("Cannot Decrypt Keys. Please re-enter your password and try again");
 			//keys = JSON.parse(saved);
 			sessionStorage.clear();
 			location.reload(true);
@@ -241,7 +241,7 @@ function Initialise() {
     // user has never used facebook extension before
 	//alert(my_username);
 	//alert(initState);
-	alert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up.\nIf you have already setup your account, try refreshing the page.");
+	customAlert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up.\nIf you have already setup your account, try refreshing the page.");
 	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 	//cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
   }
@@ -279,7 +279,7 @@ function getPassword(){
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
 			
 				if (de_correctStr == "Correctness Check") {
-					alert("FacebookCrypto is now enabled"); 
+					customAlert("FacebookCrypto is now enabled"); 
 					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
 					return;
@@ -294,7 +294,7 @@ function getPassword(){
 			}
 			catch (e){
 				// password is wrong
-				alert("Wrong Password Entered"); 
+				customAlert("Wrong Password Entered"); 
 			}
 		
 		}
@@ -336,8 +336,16 @@ function hasClass(element, cls) {
 }
 
 function DocChanged(e) {
-   //if (document.URL.match(/groups/)){
-   // AddActivateButton();
+   if (document.URL.match(/groups/)){
+	if (!document.getElementById('active-button')) {
+        AddActivateButton();
+	}
+   }
+   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
+	if (!document.getElementById('keygen-wrapper')) {
+         AddKeyWrapper();
+    }
+   }
 	//AddKeyWrapper();
    //}
   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
@@ -602,7 +610,7 @@ function AddDBKey() {
 	var g = document.getElementById('new-pass').value;
   
 	if (g.length < 1) {
-		alert("Please enter a password");
+		customAlert("Please enter a password");
 		return;
 	}
   
@@ -655,7 +663,7 @@ function AddDBKey() {
 			}
 			catch (e){
 				// password is wrong
-				alert("Wrong Password Entered"); 
+				customAlert("Wrong Password Entered"); 
 				return;
 			}
 	}
@@ -808,6 +816,7 @@ function AddKeyWrapper(){
 
 	//add separator
 	var separator = document.createElement("li");
+	separator.setAttribute("id", "keygen-wrapper");
 	separator.setAttribute("class", "uiMenuSeparator");
 	menu.appendChild(separator);
 	
@@ -826,7 +835,7 @@ function AddKeyWrapper(){
 	//add keygen element
 	var keygen = generateCustomListElement(genText, DoKeyGen);
 	//keygen.setAttribute("class", "uiMenuItem");
-	keygen.setAttribute("id", "keygen-wrapper");
+	//keygen.setAttribute("id", "keygen-wrapper");
 	//keygen.setAttribute("data-label", "Generate New Key");
 	//keygen.appendChild(generateCustomAnchor("Generate New CryptoKey", DoKeyGen));
 	
@@ -980,17 +989,19 @@ function DoKeyGen(){
   }
  
   GenerateKey(group);
-  alert("Key generated for " + group + " :\n" + keys[group]);
+  customAlert("Key generated for " + group + " :\n" + keys[group]);
   location.reload(true);
 }
 
 function DoKeyView(){
   var group = CurrentGroup();
   if (group in keys){
-	alert(group + "'s Key :\n" + keys[group]);
+	//alert(group + "'s Key :\n" + keys[group]);
+	customAlert(group + "'s Key :\n" + keys[group]);
+	//customAlert(group + "'s Key :\n" + keys[group]);
   }
   else {
-    alert(group + " has no key stored. Either generate a new key or add in an existing key");
+    customAlert(group + " has no key stored. Either generate a new key or add in an existing key");
   }
 }
 
@@ -1010,15 +1021,15 @@ function DoKeyChange(){
 				keys[group] = newKey;
 				SaveKeys();
 				if (existingKey){
-					alert("Key Changed");
+					customAlert("Key Changed");
 				}
 				else {
-				    alert("Key Added");
+				    customAlert("Key Added");
 				}
 				location.reload(true);
 			}
 			catch (e){
-				alert("Invalid key entered");
+				customAlert("Invalid key entered");
 				return;
 			}
 		}
@@ -1053,7 +1064,7 @@ function GenerateKeyWrapper() {
   var group = document.getElementById('gen-key-group').value;
 
   if (group.length < 1) {
-    alert("You need to set a group");
+    customAlert("You need to set a group");
     return;
   }
 
@@ -1149,7 +1160,7 @@ function UpdateKeysTable() {
 function AddKey() {
   var g = document.getElementById('new-key-group').value;
   if (g.length < 1) {
-    alert("You need to set a group");
+    customAlert("You need to set a group");
     return;
   }
   var k = document.getElementById('new-key-key').value;
@@ -1158,7 +1169,7 @@ function AddKey() {
 	assert(sjcl.bitArray.bitLength(keyBitArray) == 256, "Incorrect key size");
   }
   catch (e){
-     alert("Invalid key entered");
+     customAlert("Invalid key entered");
 	 return;
   }
   
@@ -1211,6 +1222,134 @@ function CurrentGroup() {
 
 function GetMsgText(msg) {
   return msg.innerHTML;
+}
+
+function generateDimmer() {
+    var dimmerdiv = document.createElement('div');
+    dimmerdiv.setAttribute("id", "dimmer");
+	dimmerdiv.style.position = "fixed";
+    dimmerdiv.style.left = 0;
+    dimmerdiv.style.top = 0;
+	dimmerdiv.style.width = '100%'; 
+	dimmerdiv.style.height = '100%';
+	dimmerdiv.style.backgroundColor = '#000';
+	dimmerdiv.style.zIndex = 1001;
+	dimmerdiv.style.opacity = 0.6;
+	dimmerdiv.style.display = 'none'; 
+
+	var div = document.body;
+    div.appendChild(dimmerdiv);
+}
+
+
+function customAlert(msg){
+   if (document.getElementById('dimmer')) {
+    //dimmer created
+  }
+  else {
+   generateDimmer()
+  
+  }
+
+  if (document.getElementById('customAlert')) {
+    //div created
+  }
+  else { //create dimming div
+	var div = document.body;
+	
+	var maindiv = document.createElement('div');
+    maindiv.setAttribute("id", "customAlert");
+	maindiv.setAttribute("class", "_t");
+	maindiv.style.position = "fixed";
+    maindiv.style.left = '50%';
+    maindiv.style.top = '50%';
+	maindiv.style.width = '30%'; 
+	maindiv.style.height = 'auto';
+	maindiv.style.marginLeft = '-15%'; 
+	maindiv.style.marginTop = '-100px'; 
+	maindiv.style.zIndex = 1002;
+	maindiv.style.backgroundColor = '#fff';
+	maindiv.style.display = 'none'; 
+
+	
+    div.appendChild(maindiv);
+	
+	var titlediv = document.createElement('div');
+    titlediv.setAttribute("id", "customAlertTitle");
+	titlediv.setAttribute("class", "pvs phm _1yw");
+	titlediv.style.display = 'inherit'; 
+    titlediv.innerHTML = 'CryptoPost';
+	maindiv.appendChild(titlediv);
+	
+	var msgdiv = document.createElement('div');
+	msgdiv.setAttribute("class", "_13");
+	msgdiv.style.display = 'inherited'; 
+	msgdiv.style.borderColor = 'transparent'; 
+	msgdiv.style.height = 'auto';
+	msgdiv.style.marginLeft = '5%'; 
+	msgdiv.style.marginRight = '5%'; 
+	
+    maindiv.appendChild(msgdiv);
+	
+	var table = document.createElement('table');
+      table.id = 'customAlertTable';
+      table.style.borderCollapse = "collapse";
+	  table.style.borderColor = "transparent";
+      table.setAttribute("class", "uiInfoTable");
+      table.setAttribute('cellpadding', 3);
+      table.setAttribute('cellspacing', 1);
+      table.setAttribute('border', 1);
+      table.setAttribute('width', "80%");
+      msgdiv.appendChild(table);
+	  
+	var row = document.createElement('tr');
+
+	var td = document.createElement('td');
+	td.setAttribute("id", "customAlertMsgBody");
+    table.appendChild(row);
+    row.appendChild(td);
+	
+	//add button
+	var buttonWrapper = document.createElement("span");
+	buttonWrapper.style.float = "right";
+
+
+  var buttonLabel = document.createElement("label");
+  buttonLabel.setAttribute("class", "submitBtn uiButton uiButtonConfirm");
+
+  var buttonButton = document.createElement("input");
+  buttonButton.setAttribute("value", "Ok");
+  buttonButton.setAttribute("type", "button");
+  buttonButton.setAttribute("id", "alert-button");
+  buttonButton.setAttribute("class", "alert-button");
+  buttonButton.addEventListener("click", HideCustomAlert, false);
+
+  buttonLabel.appendChild(buttonButton);
+  buttonWrapper.appendChild(buttonLabel);
+  row = document.createElement('tr');
+  td = document.createElement('td');
+  table.appendChild(row);
+    row.appendChild(td);
+	td.appendChild(buttonWrapper);
+  }
+  var dimmer = document.getElementById('dimmer');
+  var customAlert = document.getElementById('customAlert');
+  var customMsgBody = document.getElementById('customAlertMsgBody');
+  //edit msg
+  customMsgBody.innerHTML = msg;
+  //show div
+  customAlert.style.display = 'block';
+   dimmer.style.display = 'block';
+}
+
+function HideCustomAlert(){
+
+
+     var alertDiv = document.getElementById('customAlert');
+	 alertDiv.parentNode.removeChild(alertDiv);
+	 
+	 var dimmer = document.getElementById('dimmer');
+     dimmer.style.display = 'none';
 }
 
 function getTextFromChildren(parent, skipClass, results) {
@@ -1362,7 +1501,7 @@ function getElementsByClassName(node,classname) {
     * @author Dan Boneh
     */
 
-	
+
 var sjcl={cipher:{},hash:{},keyexchange:{},mode:{},misc:{},codec:{},exception:{corrupt:function(a){this.toString=function(){return"CORRUPT: "+this.message};this.message=a},invalid:function(a){this.toString=function(){return"INVALID: "+this.message};this.message=a},bug:function(a){this.toString=function(){return"BUG: "+this.message};this.message=a},notReady:function(a){this.toString=function(){return"NOT READY: "+this.message};this.message=a}}};
 if(typeof module!="undefined"&&module.exports)module.exports=sjcl;
 sjcl.cipher.aes=function(a){this.h[0][0][0]||this.z();var b,c,d,e,f=this.h[0][4],g=this.h[1];b=a.length;var h=1;if(b!==4&&b!==6&&b!==8)throw new sjcl.exception.invalid("invalid aes key size");this.a=[d=a.slice(0),e=[]];for(a=b;a<4*b+28;a++){c=d[a-1];if(a%b===0||b===8&&a%b===4){c=f[c>>>24]<<24^f[c>>16&255]<<16^f[c>>8&255]<<8^f[c&255];if(a%b===0){c=c<<8^c>>>24^h<<24;h=h<<1^(h>>7)*283}}d[a]=d[a-b]^c}for(b=0;a;b++,a--){c=d[b&3?a:a-4];e[b]=a<=4||b<4?c:g[0][f[c>>>24]]^g[1][f[c>>16&255]]^g[2][f[c>>8&255]]^

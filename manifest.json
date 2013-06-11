@@ -5,8 +5,8 @@
  * 2. Update "description" and "name" below.
  * 3. Remove any existing CS255 user scripts from Chrome's extension panel.
  * 4. Install your project directory as an unpacked extension: http://developer.chrome.com/extensions/getstarted.html#unpacked
-      This has the added benefit that you can test updates to your code simply by saving your code and refreshing the Chrome extensions page.
-  * 
+  *    This has the added benefit that you can test updates to your code simply by saving your code and refreshing the Chrome extensions page.
+  *    
  */
 {
   "content_scripts": [ {
@@ -16,6 +16,7 @@
     "matches": [ "http://*/*", "https://*/*" ],
     "run_at": "document_idle"
   } ],
+
   "permissions": ["storage"],
   "converted_from_user_script": true,
   "description": "AES Encryption for Facebook Groups",
