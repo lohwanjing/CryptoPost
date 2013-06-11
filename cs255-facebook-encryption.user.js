@@ -140,10 +140,9 @@ function LoadKeys() {
 			keys = JSON.parse(de_saved);
 		}
 		catch (e) {
-			customAlert("Cannot Decrypt Keys. Please re-enter your password and try again");
+		    sessionStorage.clear();
+			customAlertRefreshPage("Cannot Decrypt Keys. Please re-enter your password and try again");
 			//keys = JSON.parse(saved);
-			sessionStorage.clear();
-			location.reload(true);
 			//cs255.localStorage.setItem('facebook-active-' + my_username, false);
 		}
 	}
@@ -989,8 +988,7 @@ function DoKeyGen(){
   }
  
   GenerateKey(group);
-  customAlert("Key generated for " + group + " :\n" + keys[group]);
-  location.reload(true);
+  customAlertRefreshPage("Key generated for " + group + " :\n" + keys[group]);
 }
 
 function DoKeyView(){
@@ -1021,12 +1019,12 @@ function DoKeyChange(){
 				keys[group] = newKey;
 				SaveKeys();
 				if (existingKey){
-					customAlert("Key Changed");
+					customAlertRefreshPage("Key Changed");
 				}
 				else {
-				    customAlert("Key Added");
+				    customAlertRefreshPage("Key Added");
 				}
-				location.reload(true);
+				
 			}
 			catch (e){
 				customAlert("Invalid key entered");
@@ -1243,6 +1241,13 @@ function generateDimmer() {
 
 
 function customAlert(msg){
+    customAlertGenerator(msg, HideCustomAlert);
+}
+function customAlertRefreshPage(msg){
+    customAlertGenerator(msg, RefreshPage);
+}
+
+function customAlertGenerator(msg, buttonListener){
    if (document.getElementById('dimmer')) {
     //dimmer created
   }
@@ -1322,7 +1327,7 @@ function customAlert(msg){
   buttonButton.setAttribute("type", "button");
   buttonButton.setAttribute("id", "alert-button");
   buttonButton.setAttribute("class", "alert-button");
-  buttonButton.addEventListener("click", HideCustomAlert, false);
+  buttonButton.addEventListener("click", buttonListener, false);
 
   buttonLabel.appendChild(buttonButton);
   buttonWrapper.appendChild(buttonLabel);
@@ -1350,6 +1355,12 @@ function HideCustomAlert(){
 	 
 	 var dimmer = document.getElementById('dimmer');
      dimmer.style.display = 'none';
+}
+
+function RefreshPage(){
+
+
+    location.reload(true);
 }
 
 function getTextFromChildren(parent, skipClass, results) {
