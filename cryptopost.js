@@ -570,20 +570,19 @@ function UpdatePasswordTable() {
 
 //deletes all user data for the currently logged in user
 function ClearUserData(){
-	var r=confirm("This will delete all stored data for this user.\nDo you wish to proceed?");
-		if (r==true) {
-		    cs255.localStorage.setItem('facebook-initState-' + my_username, false);
+    customConfirmGenerator("This will delete all stored data for this user.\nDo you wish to proceed?", ClearUserDataConfirm, HideCustomAlert);
+}
+
+function ClearUserDataConfirm(){
+   cs255.localStorage.setItem('facebook-initState-' + my_username, false);
 		    cs255.localStorage.setItem('facebook-active-' + my_username, false);
 			keys = {};
 			cs255.localStorage.setItem('facebook-correct-' + my_username, null);
 			cs255.localStorage.setItem('facebook-keys-' + my_username, null);
 			sessionStorage.clear();
 			location.reload(true);
-		}
-		else {
-			return;
-		}
-	
+
+
 }
 
 //deactivates the extension
@@ -980,11 +979,13 @@ function AddKeyWrapper(){
 function DoKeyGen(){
   var group = CurrentGroup();
   if (group in keys){
-	 var overRide = confirm("Key exists.\nAre you sure you want to override the existing key?", null);
-	    
-		if (overRide == false){
-			return;
-		}
+	 //var overRide = confirm("Key exists.\nAre you sure you want to override the existing key?", null);
+	    customConfirmGenerator("Key exists.\nAre you sure you want to override the existing key?", KeyGenConfirm, HideCustomAlert);
+		return;
+		//var overRide = confirm("Key exists.\nAre you sure you want to override the existing key?", null);
+		//if (overRide == false){
+			//return;
+		//}
   }
  
   GenerateKey(group);
@@ -1257,9 +1258,11 @@ function customAlertGenerator(msg, buttonListener){
   }
 
   if (document.getElementById('customAlert')) {
-    //div created
+    //div created, remove it
+	var alertDiv = document.getElementById('customAlert');
+	 alertDiv.parentNode.removeChild(alertDiv);
   }
-  else { //create floating box
+  //create floating box
 	var div = document.body;
 	
 	var maindiv = document.createElement('div');
@@ -1343,7 +1346,146 @@ function customAlertGenerator(msg, buttonListener){
   table.appendChild(row);
     row.appendChild(td);
 	td.appendChild(buttonWrapper);
+  
+  var dimmer = document.getElementById('dimmer');
+  var customAlert = document.getElementById('customAlert');
+  var customMsgBody = document.getElementById('customAlertMsgBody');
+  //edit msg
+  customMsgBody.innerText = msg;
+  //show div
+  customAlert.style.display = 'block';
+   dimmer.style.display = 'block';
+}
+
+
+
+function HideCustomAlert(){
+
+
+     var alertDiv = document.getElementById('customAlert');
+	 alertDiv.parentNode.removeChild(alertDiv);
+	 
+	 var dimmer = document.getElementById('dimmer');
+     dimmer.style.display = 'none';
+}
+
+function customConfirmGenerator(msg, okButtonListener, cancelButtonListener){
+   if (document.getElementById('dimmer')) {
+    //dimmer created
   }
+  else {
+   generateDimmer()
+  
+  }
+
+  if (document.getElementById('customAlert')) {
+    var alertDiv = document.getElementById('customAlert');
+	 alertDiv.parentNode.removeChild(alertDiv);
+  }
+   //create floating box
+	var div = document.body;
+	
+	var maindiv = document.createElement('div');
+    maindiv.setAttribute("id", "customAlert");
+	maindiv.setAttribute("class", "_t");
+	maindiv.style.position = "fixed";
+    maindiv.style.left = '50%';
+    maindiv.style.top = '50%';
+	maindiv.style.width = '30%'; 
+	maindiv.style.height = 'auto';
+	maindiv.style.marginLeft = '-15%'; 
+	maindiv.style.marginTop = '-100px'; 
+	maindiv.style.zIndex = 1002;
+	maindiv.style.backgroundColor = '#fff';
+	maindiv.style.display = 'none'; 
+
+	
+    div.appendChild(maindiv);
+	
+	var titlediv = document.createElement('div');
+    titlediv.setAttribute("id", "customAlertTitle");
+	//titlediv.setAttribute("class", "uiHeaderTitle");
+	titlediv.style.backgroundColor = '#6d84b4';
+	titlediv.style.border ='1px solid #3b5998';
+	titlediv.style.borderBottom = '0'
+	titlediv.style.color = '#fff';
+	titlediv.style.fontSize = '14px';
+	titlediv.style.fontWeight = 'bold'
+	//background-color:#6d84b4;border:1px solid #3b5998;border-bottom:0;color:#fff;font-size:14px;font-weight:bold}
+	titlediv.style.display = 'inherit'; 
+    titlediv.innerText = 'CryptoPost';
+	maindiv.appendChild(titlediv);
+	
+	var msgdiv = document.createElement('div');
+	msgdiv.setAttribute("class", "_13");
+	msgdiv.style.display = 'inherited'; 
+	msgdiv.style.borderColor = 'transparent'; 
+	msgdiv.style.height = 'auto';
+	msgdiv.style.marginLeft = '5%'; 
+	msgdiv.style.marginRight = '5%'; 
+	
+    maindiv.appendChild(msgdiv);
+	
+	var table = document.createElement('table');
+      table.id = 'customAlertTable';
+      table.style.borderCollapse = "collapse";
+	  table.style.borderColor = "transparent";
+      table.setAttribute("class", "uiInfoTable");
+      table.setAttribute('cellpadding', 3);
+      table.setAttribute('cellspacing', 1);
+      table.setAttribute('border', 1);
+      table.setAttribute('width', "80%");
+      msgdiv.appendChild(table);
+	  
+	var row = document.createElement('tr');
+
+	var td = document.createElement('td');
+	td.setAttribute("id", "customAlertMsgBody");
+    table.appendChild(row);
+    row.appendChild(td);
+	
+	//add button
+	var buttonWrapper = document.createElement("span");
+	buttonWrapper.style.float = "right";
+
+
+  var buttonLabel = document.createElement("label");
+  buttonLabel.setAttribute("class", "uiButton");
+
+  var buttonButton = document.createElement("input");
+  buttonButton.setAttribute("value", "Cancel");
+  buttonButton.setAttribute("type", "button");
+  buttonButton.setAttribute("id", "cancel-button");
+  buttonButton.setAttribute("class", "cancel-button");
+  buttonButton.addEventListener("click", cancelButtonListener, false);
+
+  buttonLabel.appendChild(buttonButton);
+  buttonWrapper.appendChild(buttonLabel);
+  row = document.createElement('tr');
+  td = document.createElement('td');
+  table.appendChild(row);
+    row.appendChild(td);
+	td.appendChild(buttonWrapper);
+	
+	buttonWrapper = document.createElement("span");
+	buttonWrapper.style.float = "right";
+
+	buttonLabel = document.createElement("label");
+  buttonLabel.setAttribute("class", "uiButton uiButtonConfirm");
+
+  buttonButton = document.createElement("input");
+  buttonButton.setAttribute("value", "Ok");
+  buttonButton.setAttribute("type", "button");
+  buttonButton.setAttribute("id", "alert-button");
+  buttonButton.setAttribute("class", "alert-button");
+  buttonButton.addEventListener("click", okButtonListener, false);
+
+
+
+  buttonLabel.appendChild(buttonButton);
+  buttonWrapper.appendChild(buttonLabel);
+  td.appendChild(buttonWrapper);
+  
   var dimmer = document.getElementById('dimmer');
   var customAlert = document.getElementById('customAlert');
   var customMsgBody = document.getElementById('customAlertMsgBody');
@@ -1354,14 +1496,16 @@ function customAlertGenerator(msg, buttonListener){
    dimmer.style.display = 'block';
 }
 
-function HideCustomAlert(){
-
-
-     var alertDiv = document.getElementById('customAlert');
+function KeyGenConfirm(){
+  //hide original confirm dialog
+  if (document.getElementById('customAlert')) {
+    var alertDiv = document.getElementById('customAlert');
 	 alertDiv.parentNode.removeChild(alertDiv);
-	 
-	 var dimmer = document.getElementById('dimmer');
-     dimmer.style.display = 'none';
+  }
+  var group = CurrentGroup();
+  GenerateKey(group);
+  customAlertRefreshPage("Key generated for " + group + " :\n" + keys[group]);
+
 }
 
 function RefreshPage(){
