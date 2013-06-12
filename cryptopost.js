@@ -243,44 +243,80 @@ function Initialise() {
 	customAlert("Thank you for installing FacebookCrypto.\nPlease proceed to your facebook settings page to set it up.\nIf you have already setup your account, try refreshing the page.");
 	cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
 	//cs255.localStorage.setItem('facebook-promptState-' + my_username, 'true'); // so we won't prompt again
+	 GeneralInit();
   }
   
   else if (initState == 'true'){ // initialised and working
     //get and store password
-     getPassword();
+     getPasswordMain();
    }
   
 }
-//checks if password has been entered previously and if the password is correct
-function getPassword(){
+
+function GeneralInit(){
+    LoadKeys();
+	AddElements();
+	UpdateKeysTable();
+	UpdatePasswordTable();
+	RegisterChangeEvents();
+    console.log("CS255 script finished loading.");
+}
+
+//main prompt for password & initialisation
+function getPasswordMain(reload){
 	  //check if password correctly entered
    var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
    var diskKey;
    if (diskKey_str){
       // key already present
-	  //do nothing
+	  //initialise everything else
+	 GeneralInit();
    }
-   else {
-        
-         while (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
-		//prompt for password
-		var password = prompt("Please enter your encryption password.\nPress cancel to disable FacebookCrypto", null);
-		if (password){
+   else { // key not present
+        if (cs255.localStorage.getItem('facebook-active-' + my_username) == 'true'){
+		    if (reload){
+			     customPromptGenerator("Please enter your encryption password.\nPress cancel to disable FacebookCrypto", PasswordOkWithRefresh, PasswordCancel, 'password' )
+			}
+			else {
+			     customPromptGenerator("Please enter your encryption password.\nPress cancel to disable FacebookCrypto", PasswordOk, PasswordCancel, 'password' )
+			}
+		}
+		else {
+		    //Do inactive initialisation (generate table in settings mostly)
+			GeneralInit();
+		}
+   }
+}
+
+function PasswordOk(){
+   //get password entered
+   var input = document.getElementById('promptpass');
+   //alert(input);
+   if (input){
+      var password = input.value;
+	 // alert(password);
 		   //regenerate derived key
 			var params ={};
 			params.salt = getPasswordSalt();
+			//alert(params.salt);
 			var diskKeyData = sjcl.misc.cachedPbkdf2(password, params); 
-			diskKey = diskKeyData.key;
+			var diskKey = diskKeyData.key;
 			
 			//check if key is correct
 			var en_correctStr = cs255.localStorage.getItem('facebook-correct-' + my_username);
+			// alert(en_correctStr);
 			try {
 				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
-			
+			    //alert(de_correctStr);
+				//alert(de_correctStr == "Correctness Check");
 				if (de_correctStr == "Correctness Check") {
-					customAlert("FacebookCrypto is now enabled"); 
-					diskKey_str = sjcl.codec.base64.fromBits(diskKey);
+				    var diskKey_str = sjcl.codec.base64.fromBits(diskKey);
 					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
+					//AlertDispose();
+					GeneralInit();
+					customAlert("FacebookCrypto is now enabled");
+					//alert('reached');
+					//HideCustomAlert();
 					return;
 				}
 				
@@ -292,17 +328,105 @@ function getPassword(){
 				}
 			}
 			catch (e){
+			    //alert(e);
 				// password is wrong
-				customAlert("Wrong Password Entered"); 
+				var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Wrong Password Entered. Please try again';
 			}
 		
-		}
-		else {
-		   //deactivate extension, user clicked cancel and did not enter a password
-		   //cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
-		   Deactivate();
-		}
-	  }
+		
+   }
+   else {
+   var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Wrong Password Entered. Please try again';
+
+   }
+
+
+}
+
+
+function PasswordOkWithRefresh(){
+   //get password entered
+   var input = document.getElementById('promptpass');
+   //alert(input);
+   if (input){
+      var password = input.value;
+	 // alert(password);
+		   //regenerate derived key
+			var params ={};
+			params.salt = getPasswordSalt();
+			//alert(params.salt);
+			var diskKeyData = sjcl.misc.cachedPbkdf2(password, params); 
+			var diskKey = diskKeyData.key;
+			
+			//check if key is correct
+			var en_correctStr = cs255.localStorage.getItem('facebook-correct-' + my_username);
+			// alert(en_correctStr);
+			try {
+				var de_correctStr = sjcl.json.decrypt(diskKey, en_correctStr);
+			    //alert(de_correctStr);
+				//alert(de_correctStr == "Correctness Check");
+				if (de_correctStr == "Correctness Check") {
+				    var diskKey_str = sjcl.codec.base64.fromBits(diskKey);
+					sessionStorage.setItem('facebook-dbKey-' + my_username, diskKey_str);
+					//AlertDispose();
+					GeneralInit();
+					customAlertRefreshPage("FacebookCrypto is now enabled");
+					//alert('reached');
+					//HideCustomAlert();
+					return;
+				}
+				
+				
+				else {
+					// shouldn't get here, mac correct but plaintext wrong
+					alert("BUG! MAC Correct but test encryption wrong"); 
+					//cs255.localStorage.setItem('facebook-active-' + my_username, false); //disable extension until its set up properly
+				}
+			}
+			catch (e){
+			    //alert(e);
+				// password is wrong
+				var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Wrong Password Entered. Please try again';
+			}
+		
+		
+   }
+   else {
+   var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Wrong Password Entered. Please try again';
+
+   }
+
+
+}
+
+
+function PasswordCancel(){
+    cs255.localStorage.setItem('facebook-active-' + my_username, false);
+	GeneralInit();
+	HideCustomAlert();
+
+
+}
+
+//checks if password has been entered previously and if the password is correct
+function getPassword(){
+	  //check if password correctly entered
+   var diskKey_str =  sessionStorage.getItem('facebook-dbKey-' + my_username);
+   var diskKey;
+   if (diskKey_str){
+      // key already present
+	  //do nothing
+   }
+   else {
+        alert('Bug! Somehow initialised without a password');
    }
 }
 
@@ -742,11 +866,11 @@ function addEncryptCommentButton(e) {
 }
 
 function AddElements() {
+  AddEncryptionTab();
   if (document.URL.match(/groups/) && cs255.localStorage.getItem('facebook-active-' + my_username) == 'true') {
     tryAddEncryptButton();
     addEncryptCommentButton(document);
   }
-  AddEncryptionTab();
   if (document.URL.match(/groups/)){
 	AddActivateButton();
 	//AddKeyWrapper();
@@ -1048,12 +1172,14 @@ function DoActive(){
 		if (!cs255.localStorage.getItem('facebook-active-' + my_username) ||  cs255.localStorage.getItem('facebook-active-' + my_username) == 'false'){
 		//prompt for password
 			cs255.localStorage.setItem('facebook-active-' + my_username, true);
-			Initialise();
+			//Initialise();
+			getPasswordMain(true);
 		}
 		else {
 			Deactivate();
+			location.reload(true);
 		}
-		location.reload(true);
+		//location.reload(true);
 		
 	}
 }
@@ -1900,6 +2026,7 @@ a[b[d]];return c}};sjcl.encrypt=sjcl.json.encrypt;sjcl.decrypt=sjcl.json.decrypt
 SetupUsernames();
 //loadSJCL();
 Initialise();
+/*
 LoadKeys();
 AddElements();
 UpdateKeysTable();
@@ -1907,7 +2034,7 @@ UpdatePasswordTable();
 RegisterChangeEvents();
 
 console.log("CS255 script finished loading.");
-
+*/
 // Stub for phantom.js (http://phantomjs.org/)
 if (typeof phantom !== "undefined") {
   console.log("Hello! You're running in phantom.js.");
