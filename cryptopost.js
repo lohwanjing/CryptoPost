@@ -1,3 +1,4 @@
+
 /*
   Base code from Stanford CS255 Cryptography course, with all relevant rights. http://crypto.stanford.edu/~dabo/cs255/
   Stanford Javascript Crypto Library for AES implementation http://crypto.stanford.edu/sjcl/
@@ -139,10 +140,9 @@ function LoadKeys() {
 			keys = JSON.parse(de_saved);
 		}
 		catch (e) {
-			customAlert("Cannot Decrypt Keys. Please re-enter your password and try again");
+		    sessionStorage.clear();
+			customAlertRefreshPage("Cannot Decrypt Keys. Please re-enter your password and try again");
 			//keys = JSON.parse(saved);
-			sessionStorage.clear();
-			location.reload(true);
 			//cs255.localStorage.setItem('facebook-active-' + my_username, false);
 		}
 	}
@@ -988,8 +988,7 @@ function DoKeyGen(){
   }
  
   GenerateKey(group);
-  customAlert("Key generated for " + group + " :\n" + keys[group]);
-  location.reload(true);
+  customAlertRefreshPage("Key generated for " + group + " :\n" + keys[group]);
 }
 
 function DoKeyView(){
@@ -1020,12 +1019,12 @@ function DoKeyChange(){
 				keys[group] = newKey;
 				SaveKeys();
 				if (existingKey){
-					customAlert("Key Changed");
+					customAlertRefreshPage("Key Changed");
 				}
 				else {
-				    customAlert("Key Added");
+				    customAlertRefreshPage("Key Added");
 				}
-				location.reload(true);
+				
 			}
 			catch (e){
 				customAlert("Invalid key entered");
@@ -1242,6 +1241,13 @@ function generateDimmer() {
 
 
 function customAlert(msg){
+    customAlertGenerator(msg, HideCustomAlert);
+}
+function customAlertRefreshPage(msg){
+    customAlertGenerator(msg, RefreshPage);
+}
+
+function customAlertGenerator(msg, buttonListener){
    if (document.getElementById('dimmer')) {
     //dimmer created
   }
@@ -1253,7 +1259,7 @@ function customAlert(msg){
   if (document.getElementById('customAlert')) {
     //div created
   }
-  else { //create dimming div
+  else { //create floating box
 	var div = document.body;
 	
 	var maindiv = document.createElement('div');
@@ -1275,9 +1281,16 @@ function customAlert(msg){
 	
 	var titlediv = document.createElement('div');
     titlediv.setAttribute("id", "customAlertTitle");
-	titlediv.setAttribute("class", "pvs phm _1yw");
+	//titlediv.setAttribute("class", "uiHeaderTitle");
+	titlediv.style.backgroundColor = '#6d84b4';
+	titlediv.style.border ='1px solid #3b5998';
+	titlediv.style.borderBottom = '0'
+	titlediv.style.color = '#fff';
+	titlediv.style.fontSize = '14px';
+	titlediv.style.fontWeight = 'bold'
+	//background-color:#6d84b4;border:1px solid #3b5998;border-bottom:0;color:#fff;font-size:14px;font-weight:bold}
 	titlediv.style.display = 'inherit'; 
-    titlediv.innerHTML = 'CryptoPost';
+    titlediv.innerText = 'CryptoPost';
 	maindiv.appendChild(titlediv);
 	
 	var msgdiv = document.createElement('div');
@@ -1321,7 +1334,7 @@ function customAlert(msg){
   buttonButton.setAttribute("type", "button");
   buttonButton.setAttribute("id", "alert-button");
   buttonButton.setAttribute("class", "alert-button");
-  buttonButton.addEventListener("click", HideCustomAlert, false);
+  buttonButton.addEventListener("click", buttonListener, false);
 
   buttonLabel.appendChild(buttonButton);
   buttonWrapper.appendChild(buttonLabel);
@@ -1349,6 +1362,12 @@ function HideCustomAlert(){
 	 
 	 var dimmer = document.getElementById('dimmer');
      dimmer.style.display = 'none';
+}
+
+function RefreshPage(){
+
+
+    location.reload(true);
 }
 
 function getTextFromChildren(parent, skipClass, results) {
