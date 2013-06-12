@@ -1012,6 +1012,8 @@ function DoKeyChange(){
 	promptText = "Key already exists!\nPlease enter the new key and press Ok to override\n";
   
   }
+  customPromptGenerator(promptText, KeyChangePromptOnOk, HideCustomAlert);
+  /*
 	 var newKey = prompt(promptText, null);
 		if (newKey){
 		    try {
@@ -1032,7 +1034,7 @@ function DoKeyChange(){
 				return;
 			}
 		}
-  
+  */
 }
 
 function DoActive(){
@@ -1498,14 +1500,18 @@ function customConfirmGenerator(msg, okButtonListener, cancelButtonListener){
 
 function KeyGenConfirm(){
   //hide original confirm dialog
-  if (document.getElementById('customAlert')) {
-    var alertDiv = document.getElementById('customAlert');
-	 alertDiv.parentNode.removeChild(alertDiv);
-  }
+  AlertDispose();
   var group = CurrentGroup();
   GenerateKey(group);
   customAlertRefreshPage("Key generated for " + group + " :\n" + keys[group]);
 
+}
+
+function AlertDispose(){
+  if (document.getElementById('customAlert')) {
+    var alertDiv = document.getElementById('customAlert');
+	 alertDiv.parentNode.removeChild(alertDiv);
+  }
 }
 
 function RefreshPage(){
@@ -1514,7 +1520,7 @@ function RefreshPage(){
     location.reload(true);
 }
 
-function customPromptGenerator(msg, okButtonListener, cancelButtonListener){
+function customPromptGenerator(msg, okButtonListener, cancelButtonListener, inputType){
    if (document.getElementById('dimmer')) {
     //dimmer created
   }
@@ -1589,6 +1595,20 @@ function customPromptGenerator(msg, okButtonListener, cancelButtonListener){
     table.appendChild(row);
     row.appendChild(td);
 	
+	//add input
+	 row = document.createElement('tr');
+	table.appendChild(row);
+	
+	td = document.createElement('td');
+	if (inputType === 'password'){
+	  td.innerHTML = '<input id="promptpass" type="password" size="50">';
+	 }
+	 else {
+	   td.innerHTML = '<input id="promptpass" type="text" size="50">';
+	 }
+	  row.appendChild(td);
+	
+	
 	//add button
 	var buttonWrapper = document.createElement("span");
 	buttonWrapper.style.float = "right";
@@ -1639,6 +1659,45 @@ function customPromptGenerator(msg, okButtonListener, cancelButtonListener){
   //show div
   customAlert.style.display = 'block';
    dimmer.style.display = 'block';
+}
+
+function KeyChangePromptOnOk(){
+   var input = document.getElementById('promptpass');
+   if (input){
+      var newKey = input.value;
+	  //alert(key);
+	  //test if key is valid
+		var group = CurrentGroup();
+		var existingKey = (group in keys);
+	    try {
+				var keyBitArray = sjcl.codec.base64.toBits(newKey);
+				assert(sjcl.bitArray.bitLength(keyBitArray) == 256, "Incorrect key size");
+				keys[group] = newKey;
+				SaveKeys();
+				AlertDispose();
+				if (existingKey){
+					customAlertRefreshPage("Key Changed");
+				}
+				else {
+				    customAlertRefreshPage("Key Added");
+				}
+				
+			}
+		catch (e){
+				var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Invalid Key Entered. Please re-enter the key';
+				return;
+			}
+	
+   }
+   else {
+   var customMsgBody = document.getElementById('customAlertMsgBody');
+				//edit msg
+				customMsgBody.innerText = 'Invalid Key Entered. Please re-enter the key';
+
+   }
+
 }
 
 function getTextFromChildren(parent, skipClass, results) {
