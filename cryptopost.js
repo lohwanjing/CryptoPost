@@ -112,7 +112,7 @@ function SaveKeys() {
 
 //generate 64 bit salt for PKDF
 function generatePasswordSalt(){
-	var salt = keyGenCounter = GetRandomValues(2);
+	var salt = GetRandomValues(2);
 	var saltStr = salt = sjcl.codec.base64.fromBits(salt);
 	cs255.localStorage.setItem('facebook-dbSalt-' + my_username, saltStr);
 }
