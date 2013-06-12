@@ -20,7 +20,7 @@
   "permissions": ["storage"],
   "converted_from_user_script": true,
   "description": "AES Encryption for Facebook Groups",
-  "name": "Facebook Crypto",
-  "version": "1.5",
+  "name": "CryptoPost",
+  "version": "1.6",
   "manifest_version": 2
 }
