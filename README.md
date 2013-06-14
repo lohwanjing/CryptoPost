@@ -18,3 +18,5 @@ For best effects make sure you use https when logging onto Facebook.
 After installing the extension, you will be prompted to go to your account settings to enter a CryptoPost password when you log onto Facebook. (Excuse the ugly table) DO NOT use your actual Facebook password (Well you can, but that will defeat the point of encryption).
 
 Subsequently, when you log into Facebook, a new prompt will appear for you to enter your CryptoPost password. Enter it to make use of the extension. Press cancel to disable it for the currrent session.
+
+To be continued
