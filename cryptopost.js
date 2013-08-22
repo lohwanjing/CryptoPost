@@ -215,15 +215,20 @@ function assert(exp, message) {
 //From Stanford CS255 base code - get facebook user name
 function SetupUsernames() {
   // get who you are logged in as
-  var meta = document.getElementsByClassName('navItem tinyman')[0];
+  //var meta = document.getElementsByClassName('navItem tinyman')[0];
+  var meta = document.getElementsByClassName('fbxWelcomeBoxName')[0];
 
   // If we can't get a username, halt execution.
   assert (typeof meta !== "undefined", "CS255 script failed. No username detected. (This is usually harmless.)");
   
-  var usernameMatched = /www.facebook.com\/(.*?)ref=tn_tnmn/i.exec(meta.innerHTML);
-  usernameMatched = usernameMatched[1].replace(/&amp;/, '');
-  usernameMatched = usernameMatched.replace(/\?/, '');
-  usernameMatched = usernameMatched.replace(/profile\.phpid=/, '');
+  //var usernameMatched = /www.facebook.com\/(.*?)ref=tn_tnmn/i.exec(meta.innerHTML);
+  //usernameMatched = usernameMatched[1].replace(/&amp;/, '');
+  //usernameMatched = usernameMatched.replace(/\?/, '');
+  //usernameMatched = usernameMatched.replace(/profile\.phpid=/, '');
+  //my_username = usernameMatched; // Update global.
+  alert(meta);
+  alert(meta.innerText);
+  var usernameMatched = meta.innerText;
   my_username = usernameMatched; // Update global.
 }
 

@@ -10,14 +10,12 @@
  */
 {
   "content_scripts": [ {
-    "exclude_globs": [  ],
-    "include_globs": [ "http://www.facebook.com/*", "https://www.facebook.com/*" ],
     "js": ["cryptopost.js" ],
     "matches": [ "http://*/*", "https://*/*" ],
     "run_at": "document_idle"
   } ],
 
-  "permissions": ["storage"],
+  "permissions": ["storage", "http://www.facebook.com/*", "https://www.facebook.com/*"],
   "converted_from_user_script": true,
   "description": "AES Encryption for Facebook Groups",
   "name": "CryptoPost",
